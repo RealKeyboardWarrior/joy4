@@ -28,7 +28,7 @@ var ErrCodecDataChange = fmt.Errorf("rtsp: codec data change, please call Handle
 
 var DebugRtp = false
 var DebugRtsp = false
-var SkipErrRtpBlock = false
+var SkipErrRtpBlock = true
 
 const (
 	stageDescribeDone = iota+1
@@ -92,8 +92,7 @@ func DialTimeout(uri string, timeout time.Duration) (self *Client, err error) {
 	if _, _, err := net.SplitHostPort(URL.Host); err != nil {
 		URL.Host = URL.Host + ":554"
 	}
-
-	dailer := net.Dialer{Timeout: timeout}
+	dailer := net.Dialer{Timeout: time.Second * 30}
 	var conn net.Conn
 	if conn, err = dailer.Dial("tcp", URL.Host); err != nil {
 		return
@@ -112,7 +111,11 @@ func DialTimeout(uri string, timeout time.Duration) (self *Client, err error) {
 		DebugRtp:   DebugRtp,
 		DebugRtsp:  DebugRtsp,
 		SkipErrRtpBlock: SkipErrRtpBlock,
+		RtspTimeout: 30 * time.Second,
+		RtpTimeout: 30 * time.Second,
+		RtpKeepAliveTimeout: 5 * time.Second,
 	}
+
 	return
 }
 
@@ -1161,7 +1164,7 @@ func (self *Client) handleBlock(block []byte) (pkt av.Packet, ok bool, err error
 		TODO: sync AV by rtcp NTP timestamp
 		TODO: handle timestamp overflow
 		https://tools.ietf.org/html/rfc3550
-		A receiver can then synchronize presentation of the audio and video packets by relating 
+		A receiver can then synchronize presentation of the audio and video packets by relating
 		their RTP timestamps using the timestamp pairs in RTCP SR packets.
 		*/
 		if stream.firsttimestamp == 0 {
@@ -1236,4 +1239,3 @@ func Handler(h *avutil.RegisterHandler) {
 		return
 	}
 }
-
