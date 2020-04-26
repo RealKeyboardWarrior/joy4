@@ -44,8 +44,15 @@ func fromCPtr(buf unsafe.Pointer, size int) (ret []uint8) {
 	return
 }
 
+type RGBData struct {
+	Width int
+	Height int
+	Data []byte
+}
+
 type VideoFrame struct {
 	Image image.YCbCr
+	RGBData RGBData
 	frame *C.AVFrame
 }
 
@@ -90,6 +97,130 @@ func (self *VideoDecoder) Decode(pkt []byte) (img *VideoFrame, err error) {
 	return
 }
 
+func YCbCrToRGB(y, cb, cr uint8) (uint32, uint32, uint32, uint32) {
+
+	yy1 := int32(y) * 0x10101
+	cb1 := int32(cb) - 128
+	cr1 := int32(cr) - 128
+
+	r := yy1 + 91881*cr1
+	if uint32(r)&0xff000000 == 0 {
+		r >>= 8
+	} else {
+		r = ^(r >> 31) & 0xffff
+	}
+
+	g := yy1 - 22554*cb1 - 46802*cr1
+	if uint32(g)&0xff000000 == 0 {
+		g >>= 8
+	} else {
+		g = ^(g >> 31) & 0xffff
+	}
+
+	b := yy1 + 116130*cb1
+	if uint32(b)&0xff000000 == 0 {
+		b >>= 8
+	} else {
+		b = ^(b >> 31) & 0xffff
+	}
+
+	return uint32(r), uint32(g), uint32(b), 0xffff
+}
+
+func (self *VideoDecoder) Decode2(pkt []byte) (img *VideoFrame, err error) {
+	ff := &self.ff.ff
+
+	cgotimg := C.int(0)
+	frame := C.av_frame_alloc()
+	cerr := C.wrap_avcodec_decode_video2(ff.codecCtx, frame, unsafe.Pointer(&pkt[0]), C.int(len(pkt)), &cgotimg)
+	if cerr < C.int(0) {
+		err = fmt.Errorf("ffmpeg: avcodec_decode_video2 failed: %d", cerr)
+		return
+	}
+
+	if cgotimg != C.int(0) {
+		w := int(frame.width)
+		h := int(frame.height)
+		ys := int(frame.linesize[0])
+		cs := int(frame.linesize[1])
+
+		yPiece := fromCPtr(unsafe.Pointer(frame.data[0]), ys*h)
+		cbPiece := fromCPtr(unsafe.Pointer(frame.data[1]), cs*h/2)
+		crPiece := fromCPtr(unsafe.Pointer(frame.data[2]), cs*h/2)
+		data := make([]byte, 0, w*h*3)
+
+		for y := 0; y < h; y++ {
+			for x := 0; x < w; x++ {
+				yi := y*ys+x
+				ci := y/2*cs+x/2
+				yValue := yPiece[yi]
+				cbValue := cbPiece[ci]
+				crValue := crPiece[ci]
+				r,g,b, _ := YCbCrToRGB(yValue, cbValue, crValue)
+				data = append(data, byte(r>>8), byte(g>>8), byte(b>>8))
+			}
+		}
+
+		img = &VideoFrame{
+		RGBData: RGBData {
+			Width: w,
+			Height: h,
+			Data: data,
+		},
+		frame: frame}
+		runtime.SetFinalizer(img, freeVideoFrame)
+	}
+
+	return
+}
+
+func (self *VideoDecoder) Decode3(pkt []byte) (img *VideoFrame, err error) {
+	ff := &self.ff.ff
+
+	cgotimg := C.int(0)
+	frame := C.av_frame_alloc()
+	cerr := C.wrap_avcodec_decode_video2(ff.codecCtx, frame, unsafe.Pointer(&pkt[0]), C.int(len(pkt)), &cgotimg)
+	if cerr < C.int(0) {
+		err = fmt.Errorf("ffmpeg: avcodec_decode_video2 failed: %d", cerr)
+		return
+	}
+
+	if cgotimg != C.int(0) {
+		w := int(frame.width)
+		h := int(frame.height)
+		ys := int(frame.linesize[0])
+		cs := int(frame.linesize[1])
+
+		yPiece := fromCPtr(unsafe.Pointer(frame.data[0]), ys*h)
+		cbPiece := fromCPtr(unsafe.Pointer(frame.data[1]), cs*h/2)
+		crPiece := fromCPtr(unsafe.Pointer(frame.data[2]), cs*h/2)
+		data := make([]byte, 0, w*h*1)
+
+		for y := 0; y < h; y++ {
+			for x := 0; x < w; x++ {
+				yi := y*ys+x
+				ci := y/2*cs+x/2
+				yValue := yPiece[yi]
+				cbValue := cbPiece[ci]
+				crValue := crPiece[ci]
+				r,g,b, _ := YCbCrToRGB(yValue, cbValue, crValue)
+				avggray := (r+g+b)/3
+				data = append(data, byte(avggray>>8))
+			}
+		}
+
+		img = &VideoFrame{
+		RGBData: RGBData {
+			Width: w,
+			Height: h,
+			Data: data,
+		},
+		frame: frame}
+	}
+
+	return
+}
+
 func NewVideoDecoder(stream av.CodecData) (dec *VideoDecoder, err error) {
 	_dec := &VideoDecoder{}
 	var id uint32
@@ -121,4 +252,3 @@ func NewVideoDecoder(stream av.CodecData) (dec *VideoDecoder, err error) {
 	dec = _dec
 	return
 }
-
