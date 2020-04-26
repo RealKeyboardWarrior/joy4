@@ -50,6 +50,10 @@ type RGBData struct {
 	Data []byte
 }
 
+func (self *RGBData) Free() {
+	self.Data = nil
+}
+
 type VideoFrame struct {
 	Image image.YCbCr
 	RGBData RGBData
@@ -58,6 +62,7 @@ type VideoFrame struct {
 
 func (self *VideoFrame) Free() {
 	self.Image = image.YCbCr{}
+	self.RGBData.Free()
 	C.av_frame_free(&self.frame)
 }
 
