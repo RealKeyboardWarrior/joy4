@@ -171,7 +171,7 @@ const avCodecTypeMagic = 233333
 // can be converted to VideoCodecData or AudioCodecData using:
 //
 //     codecdata.(AudioCodecData) or codecdata.(VideoCodecData)
-// 
+//
 // for H264, CodecData is AVCDecoderConfigure bytes, includes SPS/PPS.
 type CodecData interface {
 	Type() CodecType // Video/Audio codec type
@@ -197,10 +197,11 @@ type PacketWriter interface {
 
 type PacketReader interface {
 	ReadPacket() (Packet,error)
+	ReadRtpPacket() (Packet, []byte, error)
 }
 
 // Muxer describes the steps of writing compressed audio/video packets into container formats like MP4/FLV/MPEG-TS.
-// 
+//
 // Container formats, rtmp.Conn, and transcode.Muxer implements Muxer interface.
 type Muxer interface {
 	WriteHeader([]CodecData) error // write the file header
@@ -313,4 +314,3 @@ type AudioDecoder interface {
 type AudioResampler interface {
 	Resample(AudioFrame) (AudioFrame, error) // convert raw audio frames
 }
-
