@@ -1223,15 +1223,7 @@ func (self *Client) readPacket() (pkt av.Packet, rtp_pkt []byte, err error) {
 	return
 }
 
-func (self *Client) ReadPacket() (pkt av.Packet, err error) {
-	if err = self.prepare(stageCodecDataDone); err != nil {
-		return
-	}
-	pkt, _, err = self.readPacket()
-	return
-}
-
-func (self *Client) ReadRtpPacket() (pkt av.Packet, rtp_pkt []byte, err error) {
+func (self *Client) ReadPacket() (pkt av.Packet, rtp_pkt []byte, err error) {
 	if err = self.prepare(stageCodecDataDone); err != nil {
 		return
 	}

@@ -196,8 +196,7 @@ type PacketWriter interface {
 }
 
 type PacketReader interface {
-	ReadPacket() (Packet,error)
-	ReadRtpPacket() (Packet, []byte, error)
+	ReadPacket() (Packet,[]byte,error)
 }
 
 // Muxer describes the steps of writing compressed audio/video packets into container formats like MP4/FLV/MPEG-TS.

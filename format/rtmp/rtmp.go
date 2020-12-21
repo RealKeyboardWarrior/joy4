@@ -770,7 +770,8 @@ func (self *Conn) connectPlay() (err error) {
 	return
 }
 
-func (self *Conn) ReadPacket() (pkt av.Packet, err error) {
+func (self *Conn) ReadPacket() (pkt av.Packet, rtp_pkt []byte, err error) {
+	var rtp_pkt []byte
 	if err = self.prepare(stageCodecDataDone, prepareReading); err != nil {
 		return
 	}
