@@ -138,7 +138,7 @@ func (self *Client) probe() (err error) {
 		if self.allCodecDataReady() {
 			break
 		}
-		if _, err = self.readPacket(); err != nil {
+		if _, _, err = self.readPacket(); err != nil {
 			return
 		}
 	}
