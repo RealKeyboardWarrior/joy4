@@ -1135,7 +1135,7 @@ func (self *Client) Close() (err error) {
 	return self.conn.Conn.Close()
 }
 
-func (self *Client) handleBlock(block []byte) (pkt av.Packet, ok bool, err error) {
+func (self *Client) handleBlock(block []byte) (pkt av.Packet, rtp []byte, ok bool, err error) {
 	_, blockno, _ := self.parseBlockHeader(block)
 	if blockno%2 != 0 {
 		if self.DebugRtp {
@@ -1150,6 +1150,7 @@ func (self *Client) handleBlock(block []byte) (pkt av.Packet, ok bool, err error
 		return
 	}
 	stream := self.streams[i]
+	rtp = block[4:]
 
 	herr := stream.handleRtpPacket(block[4:])
 	if herr != nil {
@@ -1194,7 +1195,7 @@ func (self *Client) handleBlock(block []byte) (pkt av.Packet, ok bool, err error
 	return
 }
 
-func (self *Client) readPacket() (pkt av.Packet, err error) {
+func (self *Client) readPacket() (pkt av.Packet, rtp_pkt []byte, err error) {
 	if err = self.SendRtpKeepalive(); err != nil {
 		return
 	}
@@ -1211,7 +1212,7 @@ func (self *Client) readPacket() (pkt av.Packet, err error) {
 		}
 
 		var ok bool
-		if pkt, ok, err = self.handleBlock(res.Block); err != nil {
+		if pkt, rtp_pkt, ok, err = self.handleBlock(res.Block); err != nil {
 			return
 		}
 		if ok {
@@ -1222,7 +1223,7 @@ func (self *Client) readPacket() (pkt av.Packet, err error) {
 	return
 }
 
-func (self *Client) ReadPacket() (pkt av.Packet, err error) {
+func (self *Client) ReadPacket() (pkt av.Packet, rtp_pkt []byte, err error) {
 	if err = self.prepare(stageCodecDataDone); err != nil {
 		return
 	}
