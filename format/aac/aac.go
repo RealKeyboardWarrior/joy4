@@ -84,7 +84,6 @@ func (self *Demuxer) Streams() (streams []av.CodecData, err error) {
 
 func (self *Demuxer) ReadPacket() (pkt av.Packet, rtp_pkt []byte, err error) {
 	var adtshdr []byte
-	var rtp_pkt []byte
 	var config aacparser.MPEG4AudioConfig
 	var hdrlen, framelen, samples int
 	if adtshdr, err = self.r.Peek(9); err != nil {
