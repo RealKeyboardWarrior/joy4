@@ -66,7 +66,6 @@ func (self *Demuxer) probe() (err error) {
 }
 
 func (self *Demuxer) ReadPacket() (pkt av.Packet, rtp_pkt []byte, err error) {
-	var rtp_pkt []byte
 	if err = self.probe(); err != nil {
 		return
 	}
