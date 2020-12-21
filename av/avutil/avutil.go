@@ -278,7 +278,7 @@ func Create(url string) (muxer av.MuxCloser, err error) {
 func CopyPackets(dst av.PacketWriter, src av.PacketReader) (err error) {
 	for {
 		var pkt av.Packet
-		var rpt_pkt av.Packet
+		var rpt_pkt []byte
 		if pkt, rpt_pkt, err = src.ReadPacket(); err != nil {
 			if err == io.EOF {
 				break
