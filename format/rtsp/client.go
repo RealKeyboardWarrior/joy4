@@ -1156,19 +1156,19 @@ func (self *Client) handleBlock(block []byte) (pkt av.Packet, rtp []byte, ok boo
 	}
 	stream := self.streams[i]
 
-	if self.RtpInterceptor != nil {
+	//if self.RtpInterceptor != nil {
 		// Make a copy of the RTP packet in case things change
 		// Down the line from here, we don't want those to mess with it.
 		rtp = make([]byte, len(block)-4)
 		copy(rtp, block[4:])
-		self.RtpInterceptor <- rtp
+		//self.RtpInterceptor <- rtp
 		// Use a lossy channel to send packets to rtp interceptor
 		// We don't want to block and queue up old data
 		/*select {
 		case self.RtpInterceptor <- rtp:
 		default:
 		}*/
-	}
+	//}
 	//	log.Print("rtp: packet len ", len(rtp))
 
 	herr := stream.handleRtpPacket(block[4:])
