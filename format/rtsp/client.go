@@ -932,14 +932,14 @@ func (self *Stream) handleH264Payload(timestamp uint32, packet []byte) (err erro
 		isEnd := fuHeader&0x40 != 0
 		if isStart {
 			self.fuStarted = true
-			log.Print("fuStarted!")
+			//log.Print("fuStarted!")
 			self.fuBuffer = []byte{fuIndicator&0xe0 | fuHeader&0x1f}
 		}
 		if self.fuStarted {
 			self.fuBuffer = append(self.fuBuffer, packet[2:]...)
 			if isEnd {
 				self.fuStarted = false
-				log.Print("fuEnded!")
+				//log.Print("fuEnded!")
 				if err = self.handleH264Payload(timestamp, self.fuBuffer); err != nil {
 					return
 				}
@@ -1156,7 +1156,7 @@ func (self *Client) handleBlock(block []byte) (pkt av.Packet, rtp []byte, ok boo
 	}
 	stream := self.streams[i]
 
-	//if self.RtpInterceptor != nil {
+	if self.RtpInterceptor != nil {
 		// Make a copy of the RTP packet in case things change
 		// Down the line from here, we don't want those to mess with it.
 		rtp = make([]byte, len(block)-4)
@@ -1168,7 +1168,7 @@ func (self *Client) handleBlock(block []byte) (pkt av.Packet, rtp []byte, ok boo
 		case self.RtpInterceptor <- rtp:
 		default:
 		}*/
-	//}
+	}
 	//	log.Print("rtp: packet len ", len(rtp))
 
 	herr := stream.handleRtpPacket(block[4:])
