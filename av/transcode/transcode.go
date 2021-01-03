@@ -28,7 +28,7 @@ type Options struct {
 	FindAudioDecoderEncoder func(codec av.AudioCodecData, i int) (
 		need bool, dec av.AudioDecoder, enc av.AudioEncoder, err error,
 	)
-	FindVideoDecoderEncoder func(codec av.VideoCodecData, i int) (
+	FindVideoDecoderEncoder func(codec av.VideoCodecData, i int, percentage int) (
 		need bool, dec *ffmpeg.VideoDecoder, enc *ffmpeg.VideoEncoder, err error,
 	)
 }
@@ -37,7 +37,7 @@ type Transcoder struct {
 	streams                 []*tStream
 }
 
-func NewTranscoder(streams []av.CodecData, options Options) (_self *Transcoder, err error) {
+func NewTranscoder(streams []av.CodecData, options Options, percentage int) (_self *Transcoder, err error) {
 	self := &Transcoder{}
 	self.streams = []*tStream{}
 
@@ -68,7 +68,7 @@ func NewTranscoder(streams []av.CodecData, options Options) (_self *Transcoder, 
 				var ok bool
 				var enc *ffmpeg.VideoEncoder
 				var dec *ffmpeg.VideoDecoder
-				ok, dec, enc, err = options.FindVideoDecoderEncoder(stream.(av.VideoCodecData), i)
+				ok, dec, enc, err = options.FindVideoDecoderEncoder(stream.(av.VideoCodecData), i, percentage)
 				if ok {
 					if err != nil {
 						return
@@ -244,7 +244,7 @@ type Muxer struct {
 }
 
 func (self *Muxer) WriteHeader(streams []av.CodecData) (err error) {
-	if self.transcoder, err = NewTranscoder(streams, self.Options); err != nil {
+	if self.transcoder, err = NewTranscoder(streams, self.Options, 100); err != nil {
 		return
 	}
 	var newstreams []av.CodecData
@@ -292,7 +292,7 @@ func (self *Demuxer) prepare() (err error) {
 		if streams, err = self.Demuxer.Streams(); err != nil {
 			return
 		}
-		if self.transcoder, err = NewTranscoder(streams, self.Options); err != nil {
+		if self.transcoder, err = NewTranscoder(streams, self.Options, 100); err != nil {
 			return
 		}
 	}
