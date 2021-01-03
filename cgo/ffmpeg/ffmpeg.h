@@ -6,6 +6,10 @@
 #include <libavutil/opt.h>
 #include <string.h>
 #include <libswscale/swscale.h>
+#include <libavutil/imgutils.h>
+#include <libavfilter/avfilter.h>
+#include <libavfilter/buffersrc.h>
+#include <libavfilter/buffersink.h>
 
 typedef struct {
 	AVCodec *codec;
@@ -22,4 +26,3 @@ static inline int avcodec_profile_name_to_int(AVCodec *codec, const char *name) 
 			return p->profile;
 	return FF_PROFILE_UNKNOWN;
 }
-
