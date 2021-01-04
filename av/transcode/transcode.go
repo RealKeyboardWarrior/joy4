@@ -141,10 +141,10 @@ func (self *tStream) videoDecodeAndEncode(inpkt av.Packet) (outpkts []av.Packet,
 		return
 	}
 
-	if dur, err = self.vdecodec.PacketDuration(inpkt.Data); err != nil {
-		err = fmt.Errorf("transcode: PacketDuration() failed for input video stream #%d", inpkt.Idx)
-		return
-	}
+	//if dur, err = self.vdecodec.PacketDuration(inpkt.Data); err != nil {
+	//	err = fmt.Errorf("transcode: PacketDuration() failed for input video stream #%d", inpkt.Idx)
+	//	return
+	//}
 
 	if Debug {
 		fmt.Println("transcode: push", inpkt.Time, dur)

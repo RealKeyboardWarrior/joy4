@@ -677,6 +677,10 @@ func (enc *VideoEncoder) SetGopSize(gopSize int) (err error) {
 	return
 }
 
+func (enc *VideoEncoder) GetGopSize() (int) {
+	return enc.gopSize
+}
+
 func (enc *VideoEncoder) SetResolution(w, h int) (err error) {
 	enc.width = w
 	enc.height = h
@@ -773,6 +777,8 @@ func NewVideoEncoderByName(name string) (enc *VideoEncoder, err error) {
 type VideoDecoder struct {
 	ff *ffctx
 	Extradata []byte
+	fpsNum int
+	fpsDen int
 }
 
 func (self *VideoDecoder) Setup() (err error) {
@@ -833,10 +839,16 @@ func (dec *VideoDecoder) Close() {
 	freeFFCtx(dec.ff)
 }
 
+func (dec *VideoDecoder) SetFramerate(num, den int) (err error) {
+	dec.fpsNum = num
+	dec.fpsDen = den
+	return
+}
+
 func (dec VideoDecoder) GetFramerate() (num, den int) {
-	ff := &dec.ff.ff
-	num = int(ff.codecCtx.framerate.num)
-	den = int(ff.codecCtx.framerate.den)
+	//ff := &dec.ff.ff
+	num = dec.fpsNum // int(ff.codecCtx.framerate.num)
+	den = dec.fpsDen //int(ff.codecCtx.framerate.den)
 	return
 }
 
