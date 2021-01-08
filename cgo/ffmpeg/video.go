@@ -40,7 +40,10 @@ type VideoFrame struct {
 
 func (self *VideoFrame) Free() {
 	self.Image = image.YCbCr{}
-	C.av_frame_free(&self.frame)
+	if self.frame != nil {
+		C.av_frame_free(&self.frame)
+		self.frame = nil
+	}
 }
 
 func freeVideoFrame(self *VideoFrame) {
@@ -222,38 +225,12 @@ type FramerateConverter struct {
 	graph                         *C.struct_AVFilterGraph
 	graphSource                   *C.AVFilterContext
 	graphSink                     *C.AVFilterContext
-	outputFrames                  []*C.AVFrame
 }
 
 // Close frees the allocated filter graph
 func (self *FramerateConverter) Close() {
 	if self != nil {
 		C.avfilter_graph_free(&self.graph)
-	}
-}
-
-// FreeFirstOutputImage frees the allocated image at the start of the queue "outputFrames"
-func (self *FramerateConverter) FreeFirstOutputImage() {
-	if self != nil {
-		if len(self.outputFrames) <= 0 {
-			return
-		}
-
-		if self.outputFrames[0] != nil {
-			C.av_frame_free(&self.outputFrames[0])
-		}
-
-		// Remove [0] from the queue
-		self.outputFrames = self.outputFrames[1:]
-	}
-}
-
-// FreeOutputImages frees all allocated images stored in outputFrames
-func (self *FramerateConverter) FreeOutputImages() {
-	if self != nil {
-		for len(self.outputFrames) > 0 {
-			self.FreeFirstOutputImage()
-		}
 	}
 }
 
@@ -291,8 +268,6 @@ func (self *FramerateConverter) ConvertFramerate(in *VideoFrame) (out []*VideoFr
 
 		f := &VideoFrame{}
 		f.frame = frame
-		self.outputFrames = append(self.outputFrames, frame)
-
 		f.Image.Y = fromCPtr(unsafe.Pointer(frame.data[0]), int(lsize))
 		f.Image.Cb = fromCPtr(unsafe.Pointer(frame.data[1]), int(csize))
 		f.Image.Cr = fromCPtr(unsafe.Pointer(frame.data[2]), int(csize))
@@ -301,6 +276,7 @@ func (self *FramerateConverter) ConvertFramerate(in *VideoFrame) (out []*VideoFr
 		f.Image.Rect = in.Image.Rect
 		f.Framerate.Num = self.OutFpsNum
 		f.Framerate.Den = self.OutFpsDen
+		runtime.SetFinalizer(f, freeVideoFrame)
 		out = append(out, f)
 	}
 	return
@@ -797,6 +773,7 @@ func (self *VideoDecoder) Decode(pkt []byte) (img *VideoFrame, err error) {
 	cerr := C.wrap_avcodec_decode_video2(ff.codecCtx, frame, unsafe.Pointer(&pkt[0]), C.int(len(pkt)), &cgotimg)
 	if cerr < C.int(0) {
 		err = fmt.Errorf("ffmpeg: avcodec_decode_video2 failed: %d", cerr)
+		C.av_frame_free(&frame)
 		return
 	}
 
@@ -825,6 +802,8 @@ func (self *VideoDecoder) Decode(pkt []byte) (img *VideoFrame, err error) {
 			},
 		}
 		runtime.SetFinalizer(img, freeVideoFrame)
+	} else {
+		C.av_frame_free(&frame)
 	}
 
 	return
