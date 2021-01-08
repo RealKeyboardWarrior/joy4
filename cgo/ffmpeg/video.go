@@ -608,14 +608,12 @@ func (enc *VideoEncoder) Encode(img *VideoFrame) (pkts []av.Packet, err error) {
 	for _, f := range frames {
 		if PixelFormatFF2AV(int32(f.frame.format)) != enc.pixelFormat || f.Width() != enc.width || f.Height() != enc.height {
 			if f, err = enc.scale(f); err != nil {
-				enc.framerateConverter.FreeOutputImages()
 				return nil, err
 			}
 		}
 
 		if gotpkt, pkt, err = enc.encodeOne(f); err != nil {
 			enc.scaler.FreeOutputImage()
-			enc.framerateConverter.FreeOutputImages()
 			return nil, err
 		}
 		if gotpkt {
@@ -623,7 +621,6 @@ func (enc *VideoEncoder) Encode(img *VideoFrame) (pkts []av.Packet, err error) {
 		}
 
 		enc.scaler.FreeOutputImage()
-		enc.framerateConverter.FreeFirstOutputImage()
 	}
 	return
 }
