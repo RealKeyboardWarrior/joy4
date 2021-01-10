@@ -148,7 +148,8 @@ func (self *Muxer) WriteHeader(streams []av.CodecData) (err error) {
 	self.streams = []*Stream{}
 	for _, stream := range streams {
 		if err = self.newStream(stream); err != nil {
-			return
+			// return
+			// no need to stop the recording if a codec doesnt match, still try to...
 		}
 	}
 
@@ -168,6 +169,10 @@ func (self *Muxer) WriteHeader(streams []av.CodecData) (err error) {
 }
 
 func (self *Muxer) WritePacket(pkt av.Packet) (err error) {
+	// Check if pkt.Idx is a valid stream
+	if len(self.stream) < pkt.Idx + 1 {
+		return
+	}
 	stream := self.streams[pkt.Idx]
 	if stream.lastpkt != nil {
 		if err = stream.writePacket(*stream.lastpkt, pkt.Time-stream.lastpkt.Time); err != nil {
