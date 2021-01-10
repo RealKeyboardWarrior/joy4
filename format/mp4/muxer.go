@@ -170,7 +170,7 @@ func (self *Muxer) WriteHeader(streams []av.CodecData) (err error) {
 
 func (self *Muxer) WritePacket(pkt av.Packet) (err error) {
 	// Check if pkt.Idx is a valid stream
-	if len(self.streams) < pkt.Idx + 1 {
+	if len(self.streams) < int(pkt.Idx + 1) {
 		return
 	}
 	stream := self.streams[pkt.Idx]
