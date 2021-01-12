@@ -273,6 +273,7 @@ func (self *Muxer) WriteTrailer() (err error) {
 	if _, err = self.w.Write(taghdr); err != nil {
 		return
 	}
+	taghdr = nil
 
 	if _, err = self.w.Seek(0, 2); err != nil {
 		return
@@ -282,6 +283,7 @@ func (self *Muxer) WriteTrailer() (err error) {
 	if _, err = self.w.Write(b); err != nil {
 		return
 	}
-
+	b = nil
+	self.bufw = nil
 	return
 }
