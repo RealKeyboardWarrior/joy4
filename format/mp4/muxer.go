@@ -158,6 +158,7 @@ func (self *Muxer) WriteHeader(streams []av.CodecData) (err error) {
 	if _, err = self.w.Write(taghdr); err != nil {
 		return
 	}
+	taghdr = nil
 	self.wpos += 8
 
 	for _, stream := range self.streams {
@@ -285,5 +286,6 @@ func (self *Muxer) WriteTrailer() (err error) {
 	}
 	b = nil
 	self.bufw = nil
+	self.streams = nil
 	return
 }
