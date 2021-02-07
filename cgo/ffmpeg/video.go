@@ -589,7 +589,7 @@ func (enc *VideoEncoder) Encode(img *VideoFrame) (pkts []av.Packet, err error) {
 	var frames []*VideoFrame
 
 	// If the input framerate and desired encoding framerate differ, convert using FramerateConverter
-	imgFps := float64(img.Framerate.Num) / float64(img.Framerate.Den)
+	/*imgFps := float64(img.Framerate.Num) / float64(img.Framerate.Den)
 	encFps := float64(enc.fpsNum) / float64(enc.fpsDen)
 
 	if imgFps != encFps {
@@ -601,7 +601,8 @@ func (enc *VideoEncoder) Encode(img *VideoFrame) (pkts []av.Packet, err error) {
 		}
 	} else {
 		frames = append(frames, img)
-	}
+	}*/
+	frames = append(frames, img)
 
 	// When converting to a framerate higher than that of the input,
 	// convertFramerate can return multiple frames, so process them all here.
