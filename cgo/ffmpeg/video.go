@@ -588,6 +588,11 @@ func (enc *VideoEncoder) Encode(img *VideoFrame) (pkts []av.Packet, err error) {
 	var pkt av.Packet
 	var frames []*VideoFrame
 
+	if img.Framerate.Num == 0 || img.Framerate.Den == 0 {
+		return
+	}
+	
+	
 	// If the input framerate and desired encoding framerate differ, convert using FramerateConverter
 	/*imgFps := float64(img.Framerate.Num) / float64(img.Framerate.Den)
 	encFps := float64(enc.fpsNum) / float64(enc.fpsDen)
