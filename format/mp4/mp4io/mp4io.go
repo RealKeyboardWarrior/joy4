@@ -1,20 +1,20 @@
-
 package mp4io
 
 import (
-	"github.com/kerberos-io/joy4/utils/bits/pio"
-	"os"
-	"io"
 	"fmt"
-	"time"
+	"io"
 	"math"
+	"os"
 	"strings"
+	"time"
+
+	"github.com/kerberos-io/joy4/utils/bits/pio"
 )
 
 type ParseError struct {
-	Debug string
+	Debug  string
 	Offset int
-	prev *ParseError
+	prev   *ParseError
 }
 
 func (self *ParseError) Error() string {
@@ -22,7 +22,7 @@ func (self *ParseError) Error() string {
 	for p := self; p != nil; p = p.prev {
 		s = append(s, fmt.Sprintf("%s:%d", p.Debug, p.Offset))
 	}
-	return "mp4io: parse error: "+strings.Join(s, ",")
+	return "mp4io: parse error: " + strings.Join(s, ",")
 }
 
 func parseErr(debug string, offset int, prev error) (err error) {
@@ -33,37 +33,37 @@ func parseErr(debug string, offset int, prev error) (err error) {
 func GetTime32(b []byte) (t time.Time) {
 	sec := pio.U32BE(b)
 	t = time.Date(1904, time.January, 1, 0, 0, 0, 0, time.UTC)
-	t = t.Add(time.Second*time.Duration(sec))
+	t = t.Add(time.Second * time.Duration(sec))
 	return
 }
 
 func PutTime32(b []byte, t time.Time) {
 	dur := t.Sub(time.Date(1904, time.January, 1, 0, 0, 0, 0, time.UTC))
-	sec := uint32(dur/time.Second)
+	sec := uint32(dur / time.Second)
 	pio.PutU32BE(b, sec)
 }
 
 func GetTime64(b []byte) (t time.Time) {
 	sec := pio.U64BE(b)
 	t = time.Date(1904, time.January, 1, 0, 0, 0, 0, time.UTC)
-	t = t.Add(time.Second*time.Duration(sec))
+	t = t.Add(time.Second * time.Duration(sec))
 	return
 }
 
 func PutTime64(b []byte, t time.Time) {
 	dur := t.Sub(time.Date(1904, time.January, 1, 0, 0, 0, 0, time.UTC))
-	sec := uint64(dur/time.Second)
+	sec := uint64(dur / time.Millisecond)
 	pio.PutU64BE(b, sec)
 }
 
 func PutFixed16(b []byte, f float64) {
 	intpart, fracpart := math.Modf(f)
 	b[0] = uint8(intpart)
-	b[1] = uint8(fracpart*256.0)
+	b[1] = uint8(fracpart * 256.0)
 }
 
 func GetFixed16(b []byte) float64 {
-	return float64(b[0])+float64(b[1])/256.0
+	return float64(b[0]) + float64(b[1])/256.0
 }
 
 func PutFixed32(b []byte, f float64) {
@@ -73,7 +73,7 @@ func PutFixed32(b []byte, f float64) {
 }
 
 func GetFixed32(b []byte) float64 {
-	return float64(pio.U16BE(b[0:2]))+float64(pio.U16BE(b[2:4]))/65536.0
+	return float64(pio.U16BE(b[0:2])) + float64(pio.U16BE(b[2:4]))/65536.0
 }
 
 type Tag uint32
@@ -89,21 +89,21 @@ func (self Tag) String() string {
 	return string(b[:])
 }
 
-type Atom interface{
-	Pos() (int,int)
+type Atom interface {
+	Pos() (int, int)
 	Tag() Tag
 	Marshal([]byte) int
-	Unmarshal([]byte, int) (int,error)
+	Unmarshal([]byte, int) (int, error)
 	Len() int
 	Children() []Atom
 }
 
 type AtomPos struct {
 	Offset int
-	Size int
+	Size   int
 }
 
-func (self AtomPos) Pos() (int,int) {
+func (self AtomPos) Pos() (int, int) {
 	return self.Offset, self.Size
 }
 
@@ -186,11 +186,16 @@ const (
 	MP4ESDescrTag          = 3
 	MP4DecConfigDescrTag   = 4
 	MP4DecSpecificDescrTag = 5
+	MP4DescrTag            = 6
+)
+
+const (
+	MP4DecConfigDataSize = 2 + 3 + 4 + 4
 )
 
 type ElemStreamDesc struct {
 	DecConfig []byte
-	TrackId uint16
+	TrackId   uint16
 	AtomPos
 }
 
@@ -200,10 +205,10 @@ func (self ElemStreamDesc) Children() []Atom {
 
 func (self ElemStreamDesc) fillLength(b []byte, length int) (n int) {
 	for i := 3; i > 0; i-- {
-		b[n] = uint8(length>>uint(7*i))&0x7f|0x80
+		b[n] = uint8(length>>uint(7*i))&0x7f | 0x80
 		n++
 	}
-	b[n] = uint8(length&0x7f)
+	b[n] = uint8(length & 0x7f)
 	n++
 	return
 }
@@ -220,7 +225,11 @@ func (self ElemStreamDesc) fillDescHdr(b []byte, tag uint8, datalen int) (n int)
 }
 
 func (self ElemStreamDesc) lenESDescHdr() (n int) {
-	return self.lenDescHdr()+3
+	return self.lenDescHdr()
+}
+
+func (self ElemStreamDesc) lenESDescData() (n int) {
+	return 3
 }
 
 func (self ElemStreamDesc) fillESDescHdr(b []byte, datalen int) (n int) {
@@ -233,7 +242,7 @@ func (self ElemStreamDesc) fillESDescHdr(b []byte, datalen int) (n int) {
 }
 
 func (self ElemStreamDesc) lenDecConfigDescHdr() (n int) {
-	return self.lenDescHdr()+2+3+4+4+self.lenDescHdr()
+	return self.lenDescHdr() + MP4DecConfigDataSize + self.lenDescHdr()
 }
 
 func (self ElemStreamDesc) fillDecConfigDescHdr(b []byte, datalen int) (n int) {
@@ -256,7 +265,28 @@ func (self ElemStreamDesc) fillDecConfigDescHdr(b []byte, datalen int) (n int) {
 }
 
 func (self ElemStreamDesc) Len() (n int) {
-	return 8+4+self.lenESDescHdr()+self.lenDecConfigDescHdr()+len(self.DecConfig)+self.lenDescHdr()+1
+	n += 8
+	n += 4
+	// 0x03 MP4ESDescHeader
+	// 5
+	n += self.lenESDescHdr()
+
+	// + ESID + ESFlags
+	// + 2    + 1
+	n += self.lenESDescData()
+
+	// 0x04 MP4DecConfigDescrTag + MP4DecConfigDataSize + 0x05 MP4DecSpecificDescrHeader
+	// 5						 + 13				 	+ 5
+	n += self.lenDecConfigDescHdr()
+
+	// Variable size configuration
+	n += len(self.DecConfig)
+
+	// 0x06 MP4DescrHeader 	+ 1
+	// 5 				+ 1
+	n += self.lenDescHdr() + 1
+
+	return // 8 + 4 + self.lenESDescHdr() + self.lenDecConfigDescHdr() + len(self.DecConfig) + self.lenDescHdr() + 1
 }
 
 // Version(4)
@@ -282,9 +312,11 @@ func (self ElemStreamDesc) Marshal(b []byte) (n int) {
 	n += 4
 	datalen := self.Len()
 	n += self.fillESDescHdr(b[n:], datalen-n-self.lenESDescHdr())
-	n += self.fillDecConfigDescHdr(b[n:], datalen-n-self.lenDescHdr()-1)
+
+	n += self.fillDecConfigDescHdr(b[n:], datalen-n-self.lenDescHdr()-self.lenDescHdr()-1)
 	copy(b[n:], self.DecConfig)
 	n += len(self.DecConfig)
+
 	n += self.fillDescHdr(b[n:], 0x06, datalen-n-self.lenDescHdr())
 	b[n] = 0x02
 	n++
@@ -310,6 +342,8 @@ func (self *ElemStreamDesc) parseDesc(b []byte, offset int) (n int, err error) {
 	if hdrlen, tag, datalen, err = self.parseDescHdr(b, offset); err != nil {
 		return
 	}
+
+	// Skip over the header lenth (tag size 1 byte + lenlen)
 	n += hdrlen
 
 	if len(b) < n+datalen {
@@ -328,17 +362,16 @@ func (self *ElemStreamDesc) parseDesc(b []byte, offset int) (n int, err error) {
 		}
 
 	case MP4DecConfigDescrTag:
-		const size = 2+3+4+4
-		if len(b) < n+size {
+		if len(b) < n+MP4DecConfigDataSize {
 			err = parseErr("MP4DecSpecificDescrTag", offset+n, err)
 			return
 		}
-		if _, err = self.parseDesc(b[n+size:], offset+n+size); err != nil {
+		if _, err = self.parseDesc(b[n+MP4DecConfigDataSize:], offset+n+MP4DecConfigDataSize); err != nil {
 			return
 		}
 
 	case MP4DecSpecificDescrTag:
-		self.DecConfig = b[n:]
+		self.DecConfig = b[n : n+datalen]
 	}
 
 	n += datalen
@@ -353,7 +386,7 @@ func (self *ElemStreamDesc) parseLength(b []byte, offset int) (n int, length int
 		}
 		c := b[n]
 		n++
-		length = (length<<7)|(int(c)&0x7f)
+		length = (length << 7) | (int(c) & 0x7f)
 		if c&0x80 == 0 {
 			break
 		}
@@ -362,13 +395,13 @@ func (self *ElemStreamDesc) parseLength(b []byte, offset int) (n int, length int
 }
 
 func (self *ElemStreamDesc) parseDescHdr(b []byte, offset int) (n int, tag uint8, datalen int, err error) {
+	var lenlen int
 	if len(b) < n+1 {
 		err = parseErr("tag", offset+n, err)
 		return
 	}
 	tag = b[n]
 	n++
-	var lenlen int
 	if lenlen, datalen, err = self.parseLength(b[n:], offset+n); err != nil {
 		return
 	}
@@ -500,4 +533,3 @@ func (self *Track) GetElemStreamDesc() (esds *ElemStreamDesc) {
 	esds, _ = atom.(*ElemStreamDesc)
 	return
 }
-

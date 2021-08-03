@@ -1,7 +1,10 @@
 package mp4io
 
-import "github.com/kerberos-io/joy4/utils/bits/pio"
-import "time"
+import (
+	"time"
+
+	"github.com/kerberos-io/joy4/utils/bits/pio"
+)
 
 const MOOF = Tag(0x6d6f6f66)
 
@@ -21,7 +24,7 @@ func (self AVC1Desc) Tag() Tag {
 	return AVC1
 }
 
-const URL  = Tag(0x75726c20)
+const URL = Tag(0x75726c20)
 
 func (self DataReferUrl) Tag() Tag {
 	return URL
@@ -204,16 +207,16 @@ func (self SoundMediaInfo) Tag() Tag {
 const MDAT = Tag(0x6d646174)
 
 type Movie struct {
-	Header		*MovieHeader
-	MovieExtend	*MovieExtend
-	Tracks		[]*Track
-	Unknowns	[]Atom
+	Header      *MovieHeader
+	MovieExtend *MovieExtend
+	Tracks      []*Track
+	Unknowns    []Atom
 	AtomPos
 }
 
 func (self Movie) Marshal(b []byte) (n int) {
 	pio.PutU32BE(b[4:], uint32(MOOV))
-	n += self.marshal(b[8:])+8
+	n += self.marshal(b[8:]) + 8
 	pio.PutU32BE(b[0:], uint32(n))
 	return
 }
@@ -288,7 +291,7 @@ func (self *Movie) Unmarshal(b []byte, offset int) (n int, err error) {
 			}
 		default:
 			{
-				atom := &Dummy{Tag_: tag, Data: b[n:n+size]}
+				atom := &Dummy{Tag_: tag, Data: b[n : n+size]}
 				if _, err = atom.Unmarshal(b[n:n+size], offset+n); err != nil {
 					err = parseErr("", n+offset, err)
 					return
@@ -315,28 +318,28 @@ func (self Movie) Children() (r []Atom) {
 }
 
 type MovieHeader struct {
-	Version			uint8
-	Flags			uint32
-	CreateTime		time.Time
-	ModifyTime		time.Time
-	TimeScale		int32
-	Duration		int32
-	PreferredRate		float64
-	PreferredVolume		float64
-	Matrix			[9]int32
-	PreviewTime		time.Time
-	PreviewDuration		time.Time
-	PosterTime		time.Time
-	SelectionTime		time.Time
-	SelectionDuration	time.Time
-	CurrentTime		time.Time
-	NextTrackId		int32
+	Version           uint8
+	Flags             uint32
+	CreateTime        time.Time
+	ModifyTime        time.Time
+	TimeScale         int32
+	Duration          int32
+	PreferredRate     float64
+	PreferredVolume   float64
+	Matrix            [9]int32
+	PreviewTime       time.Time
+	PreviewDuration   time.Time
+	PosterTime        time.Time
+	SelectionTime     time.Time
+	SelectionDuration time.Time
+	CurrentTime       time.Time
+	NextTrackId       int32
 	AtomPos
 }
 
 func (self MovieHeader) Marshal(b []byte) (n int) {
 	pio.PutU32BE(b[4:], uint32(MVHD))
-	n += self.marshal(b[8:])+8
+	n += self.marshal(b[8:]) + 8
 	pio.PutU32BE(b[0:], uint32(n))
 	return
 }
@@ -389,7 +392,7 @@ func (self MovieHeader) Len() (n int) {
 	n += 4
 	n += 2
 	n += 10
-	n += 4*len(self.Matrix[:])
+	n += 4 * len(self.Matrix[:])
 	n += 4
 	n += 4
 	n += 4
@@ -508,15 +511,15 @@ func (self MovieHeader) Children() (r []Atom) {
 }
 
 type Track struct {
-	Header		*TrackHeader
-	Media		*Media
-	Unknowns	[]Atom
+	Header   *TrackHeader
+	Media    *Media
+	Unknowns []Atom
 	AtomPos
 }
 
 func (self Track) Marshal(b []byte) (n int) {
 	pio.PutU32BE(b[4:], uint32(TRAK))
-	n += self.marshal(b[8:])+8
+	n += self.marshal(b[8:]) + 8
 	pio.PutU32BE(b[0:], uint32(n))
 	return
 }
@@ -576,7 +579,7 @@ func (self *Track) Unmarshal(b []byte, offset int) (n int, err error) {
 			}
 		default:
 			{
-				atom := &Dummy{Tag_: tag, Data: b[n:n+size]}
+				atom := &Dummy{Tag_: tag, Data: b[n : n+size]}
 				if _, err = atom.Unmarshal(b[n:n+size], offset+n); err != nil {
 					err = parseErr("", n+offset, err)
 					return
@@ -600,24 +603,24 @@ func (self Track) Children() (r []Atom) {
 }
 
 type TrackHeader struct {
-	Version		uint8
-	Flags		uint32
-	CreateTime	time.Time
-	ModifyTime	time.Time
-	TrackId		int32
-	Duration	int32
-	Layer		int16
-	AlternateGroup	int16
-	Volume		float64
-	Matrix		[9]int32
-	TrackWidth	float64
-	TrackHeight	float64
+	Version        uint8
+	Flags          uint32
+	CreateTime     time.Time
+	ModifyTime     time.Time
+	TrackId        int32
+	Duration       int32
+	Layer          int16
+	AlternateGroup int16
+	Volume         float64
+	Matrix         [9]int32
+	TrackWidth     float64
+	TrackHeight    float64
 	AtomPos
 }
 
 func (self TrackHeader) Marshal(b []byte) (n int) {
 	pio.PutU32BE(b[4:], uint32(TKHD))
-	n += self.marshal(b[8:])+8
+	n += self.marshal(b[8:]) + 8
 	pio.PutU32BE(b[0:], uint32(n))
 	return
 }
@@ -667,7 +670,7 @@ func (self TrackHeader) Len() (n int) {
 	n += 2
 	n += 2
 	n += 2
-	n += 4*len(self.Matrix[:])
+	n += 4 * len(self.Matrix[:])
 	n += 4
 	n += 4
 	return
@@ -759,17 +762,17 @@ func (self TrackHeader) Children() (r []Atom) {
 }
 
 type HandlerRefer struct {
-	Version	uint8
-	Flags	uint32
-	Type	[4]byte
-	SubType	[4]byte
-	Name	[]byte
+	Version uint8
+	Flags   uint32
+	Type    [4]byte
+	SubType [4]byte
+	Name    []byte
 	AtomPos
 }
 
 func (self HandlerRefer) Marshal(b []byte) (n int) {
 	pio.PutU32BE(b[4:], uint32(HDLR))
-	n += self.marshal(b[8:])+8
+	n += self.marshal(b[8:]) + 8
 	pio.PutU32BE(b[0:], uint32(n))
 	return
 }
@@ -782,6 +785,13 @@ func (self HandlerRefer) marshal(b []byte) (n int) {
 	n += len(self.Type[:])
 	copy(b[n:], self.SubType[:])
 	n += len(self.SubType[:])
+	// TODO: document component
+	pio.PutU32BE(b[n:], uint32(0))
+	n += 4
+	pio.PutU32BE(b[n:], uint32(0))
+	n += 4
+	pio.PutU32BE(b[n:], uint32(0))
+	n += 4
 	copy(b[n:], self.Name[:])
 	n += len(self.Name[:])
 	return
@@ -792,6 +802,10 @@ func (self HandlerRefer) Len() (n int) {
 	n += 3
 	n += len(self.Type[:])
 	n += len(self.SubType[:])
+	// TODO: document component
+	n += 4
+	n += 4
+	n += 4
 	n += len(self.Name[:])
 	return
 }
@@ -822,6 +836,10 @@ func (self *HandlerRefer) Unmarshal(b []byte, offset int) (n int, err error) {
 	}
 	copy(self.SubType[:], b[n:])
 	n += len(self.SubType)
+	// TODO: document component
+	n += 4
+	n += 4
+	n += 4
 	self.Name = b[n:]
 	n += len(b[n:])
 	return
@@ -831,16 +849,16 @@ func (self HandlerRefer) Children() (r []Atom) {
 }
 
 type Media struct {
-	Header		*MediaHeader
-	Handler		*HandlerRefer
-	Info		*MediaInfo
-	Unknowns	[]Atom
+	Header   *MediaHeader
+	Handler  *HandlerRefer
+	Info     *MediaInfo
+	Unknowns []Atom
 	AtomPos
 }
 
 func (self Media) Marshal(b []byte) (n int) {
 	pio.PutU32BE(b[4:], uint32(MDIA))
-	n += self.marshal(b[8:])+8
+	n += self.marshal(b[8:]) + 8
 	pio.PutU32BE(b[0:], uint32(n))
 	return
 }
@@ -915,7 +933,7 @@ func (self *Media) Unmarshal(b []byte, offset int) (n int, err error) {
 			}
 		default:
 			{
-				atom := &Dummy{Tag_: tag, Data: b[n:n+size]}
+				atom := &Dummy{Tag_: tag, Data: b[n : n+size]}
 				if _, err = atom.Unmarshal(b[n:n+size], offset+n); err != nil {
 					err = parseErr("", n+offset, err)
 					return
@@ -942,20 +960,20 @@ func (self Media) Children() (r []Atom) {
 }
 
 type MediaHeader struct {
-	Version		uint8
-	Flags		uint32
-	CreateTime	time.Time
-	ModifyTime	time.Time
-	TimeScale	int32
-	Duration	int32
-	Language	int16
-	Quality		int16
+	Version    uint8
+	Flags      uint32
+	CreateTime time.Time
+	ModifyTime time.Time
+	TimeScale  int32
+	Duration   int32
+	Language   int16
+	Quality    int16
 	AtomPos
 }
 
 func (self MediaHeader) Marshal(b []byte) (n int) {
 	pio.PutU32BE(b[4:], uint32(MDHD))
-	n += self.marshal(b[8:])+8
+	n += self.marshal(b[8:]) + 8
 	pio.PutU32BE(b[0:], uint32(n))
 	return
 }
@@ -1048,17 +1066,17 @@ func (self MediaHeader) Children() (r []Atom) {
 }
 
 type MediaInfo struct {
-	Sound		*SoundMediaInfo
-	Video		*VideoMediaInfo
-	Data		*DataInfo
-	Sample		*SampleTable
-	Unknowns	[]Atom
+	Sound    *SoundMediaInfo
+	Video    *VideoMediaInfo
+	Data     *DataInfo
+	Sample   *SampleTable
+	Unknowns []Atom
 	AtomPos
 }
 
 func (self MediaInfo) Marshal(b []byte) (n int) {
 	pio.PutU32BE(b[4:], uint32(MINF))
-	n += self.marshal(b[8:])+8
+	n += self.marshal(b[8:]) + 8
 	pio.PutU32BE(b[0:], uint32(n))
 	return
 }
@@ -1148,7 +1166,7 @@ func (self *MediaInfo) Unmarshal(b []byte, offset int) (n int, err error) {
 			}
 		default:
 			{
-				atom := &Dummy{Tag_: tag, Data: b[n:n+size]}
+				atom := &Dummy{Tag_: tag, Data: b[n : n+size]}
 				if _, err = atom.Unmarshal(b[n:n+size], offset+n); err != nil {
 					err = parseErr("", n+offset, err)
 					return
@@ -1178,14 +1196,14 @@ func (self MediaInfo) Children() (r []Atom) {
 }
 
 type DataInfo struct {
-	Refer		*DataRefer
-	Unknowns	[]Atom
+	Refer    *DataRefer
+	Unknowns []Atom
 	AtomPos
 }
 
 func (self DataInfo) Marshal(b []byte) (n int) {
 	pio.PutU32BE(b[4:], uint32(DINF))
-	n += self.marshal(b[8:])+8
+	n += self.marshal(b[8:]) + 8
 	pio.PutU32BE(b[0:], uint32(n))
 	return
 }
@@ -1230,7 +1248,7 @@ func (self *DataInfo) Unmarshal(b []byte, offset int) (n int, err error) {
 			}
 		default:
 			{
-				atom := &Dummy{Tag_: tag, Data: b[n:n+size]}
+				atom := &Dummy{Tag_: tag, Data: b[n : n+size]}
 				if _, err = atom.Unmarshal(b[n:n+size], offset+n); err != nil {
 					err = parseErr("", n+offset, err)
 					return
@@ -1251,15 +1269,15 @@ func (self DataInfo) Children() (r []Atom) {
 }
 
 type DataRefer struct {
-	Version	uint8
-	Flags	uint32
-	Url	*DataReferUrl
+	Version uint8
+	Flags   uint32
+	Url     *DataReferUrl
 	AtomPos
 }
 
 func (self DataRefer) Marshal(b []byte) (n int) {
 	pio.PutU32BE(b[4:], uint32(DREF))
-	n += self.marshal(b[8:])+8
+	n += self.marshal(b[8:]) + 8
 	pio.PutU32BE(b[0:], uint32(n))
 	return
 }
@@ -1313,7 +1331,7 @@ func (self *DataRefer) Unmarshal(b []byte, offset int) (n int, err error) {
 			return
 		}
 		switch tag {
-		case URL :
+		case URL:
 			{
 				atom := &DataReferUrl{}
 				if _, err = atom.Unmarshal(b[n:n+size], offset+n); err != nil {
@@ -1335,14 +1353,14 @@ func (self DataRefer) Children() (r []Atom) {
 }
 
 type DataReferUrl struct {
-	Version	uint8
-	Flags	uint32
+	Version uint8
+	Flags   uint32
 	AtomPos
 }
 
 func (self DataReferUrl) Marshal(b []byte) (n int) {
-	pio.PutU32BE(b[4:], uint32(URL ))
-	n += self.marshal(b[8:])+8
+	pio.PutU32BE(b[4:], uint32(URL))
+	n += self.marshal(b[8:]) + 8
 	pio.PutU32BE(b[0:], uint32(n))
 	return
 }
@@ -1381,15 +1399,15 @@ func (self DataReferUrl) Children() (r []Atom) {
 }
 
 type SoundMediaInfo struct {
-	Version	uint8
-	Flags	uint32
-	Balance	int16
+	Version uint8
+	Flags   uint32
+	Balance int16
 	AtomPos
 }
 
 func (self SoundMediaInfo) Marshal(b []byte) (n int) {
 	pio.PutU32BE(b[4:], uint32(SMHD))
-	n += self.marshal(b[8:])+8
+	n += self.marshal(b[8:]) + 8
 	pio.PutU32BE(b[0:], uint32(n))
 	return
 }
@@ -1440,16 +1458,16 @@ func (self SoundMediaInfo) Children() (r []Atom) {
 }
 
 type VideoMediaInfo struct {
-	Version		uint8
-	Flags		uint32
-	GraphicsMode	int16
-	Opcolor		[3]int16
+	Version      uint8
+	Flags        uint32
+	GraphicsMode int16
+	Opcolor      [3]int16
 	AtomPos
 }
 
 func (self VideoMediaInfo) Marshal(b []byte) (n int) {
 	pio.PutU32BE(b[4:], uint32(VMHD))
-	n += self.marshal(b[8:])+8
+	n += self.marshal(b[8:]) + 8
 	pio.PutU32BE(b[0:], uint32(n))
 	return
 }
@@ -1471,7 +1489,7 @@ func (self VideoMediaInfo) Len() (n int) {
 	n += 1
 	n += 3
 	n += 2
-	n += 2*len(self.Opcolor[:])
+	n += 2 * len(self.Opcolor[:])
 	return
 }
 func (self *VideoMediaInfo) Unmarshal(b []byte, offset int) (n int, err error) {
@@ -1510,19 +1528,19 @@ func (self VideoMediaInfo) Children() (r []Atom) {
 }
 
 type SampleTable struct {
-	SampleDesc		*SampleDesc
-	TimeToSample		*TimeToSample
-	CompositionOffset	*CompositionOffset
-	SampleToChunk		*SampleToChunk
-	SyncSample		*SyncSample
-	ChunkOffset		*ChunkOffset
-	SampleSize		*SampleSize
+	SampleDesc        *SampleDesc
+	TimeToSample      *TimeToSample
+	CompositionOffset *CompositionOffset
+	SampleToChunk     *SampleToChunk
+	SyncSample        *SyncSample
+	ChunkOffset       *ChunkOffset
+	SampleSize        *SampleSize
 	AtomPos
 }
 
 func (self SampleTable) Marshal(b []byte) (n int) {
 	pio.PutU32BE(b[4:], uint32(STBL))
-	n += self.marshal(b[8:])+8
+	n += self.marshal(b[8:]) + 8
 	pio.PutU32BE(b[0:], uint32(n))
 	return
 }
@@ -1680,16 +1698,16 @@ func (self SampleTable) Children() (r []Atom) {
 }
 
 type SampleDesc struct {
-	Version		uint8
-	AVC1Desc	*AVC1Desc
-	MP4ADesc	*MP4ADesc
-	Unknowns	[]Atom
+	Version  uint8
+	AVC1Desc *AVC1Desc
+	MP4ADesc *MP4ADesc
+	Unknowns []Atom
 	AtomPos
 }
 
 func (self SampleDesc) Marshal(b []byte) (n int) {
 	pio.PutU32BE(b[4:], uint32(STSD))
-	n += self.marshal(b[8:])+8
+	n += self.marshal(b[8:]) + 8
 	pio.PutU32BE(b[0:], uint32(n))
 	return
 }
@@ -1773,7 +1791,7 @@ func (self *SampleDesc) Unmarshal(b []byte, offset int) (n int, err error) {
 			}
 		default:
 			{
-				atom := &Dummy{Tag_: tag, Data: b[n:n+size]}
+				atom := &Dummy{Tag_: tag, Data: b[n : n+size]}
 				if _, err = atom.Unmarshal(b[n:n+size], offset+n); err != nil {
 					err = parseErr("", n+offset, err)
 					return
@@ -1797,22 +1815,22 @@ func (self SampleDesc) Children() (r []Atom) {
 }
 
 type MP4ADesc struct {
-	DataRefIdx		int16
-	Version			int16
-	RevisionLevel		int16
-	Vendor			int32
-	NumberOfChannels	int16
-	SampleSize		int16
-	CompressionId		int16
-	SampleRate		float64
-	Conf			*ElemStreamDesc
-	Unknowns		[]Atom
+	DataRefIdx       int16
+	Version          int16
+	RevisionLevel    int16
+	Vendor           int32
+	NumberOfChannels int16
+	SampleSize       int16
+	CompressionId    int16
+	SampleRate       float64
+	Conf             *ElemStreamDesc
+	Unknowns         []Atom
 	AtomPos
 }
 
 func (self MP4ADesc) Marshal(b []byte) (n int) {
 	pio.PutU32BE(b[4:], uint32(MP4A))
-	n += self.marshal(b[8:])+8
+	n += self.marshal(b[8:]) + 8
 	pio.PutU32BE(b[0:], uint32(n))
 	return
 }
@@ -1935,7 +1953,7 @@ func (self *MP4ADesc) Unmarshal(b []byte, offset int) (n int, err error) {
 			}
 		default:
 			{
-				atom := &Dummy{Tag_: tag, Data: b[n:n+size]}
+				atom := &Dummy{Tag_: tag, Data: b[n : n+size]}
 				if _, err = atom.Unmarshal(b[n:n+size], offset+n); err != nil {
 					err = parseErr("", n+offset, err)
 					return
@@ -1956,28 +1974,28 @@ func (self MP4ADesc) Children() (r []Atom) {
 }
 
 type AVC1Desc struct {
-	DataRefIdx		int16
-	Version			int16
-	Revision		int16
-	Vendor			int32
-	TemporalQuality		int32
-	SpatialQuality		int32
-	Width			int16
-	Height			int16
-	HorizontalResolution	float64
-	VorizontalResolution	float64
-	FrameCount		int16
-	CompressorName		[32]byte
-	Depth			int16
-	ColorTableId		int16
-	Conf			*AVC1Conf
-	Unknowns		[]Atom
+	DataRefIdx           int16
+	Version              int16
+	Revision             int16
+	Vendor               int32
+	TemporalQuality      int32
+	SpatialQuality       int32
+	Width                int16
+	Height               int16
+	HorizontalResolution float64
+	VorizontalResolution float64
+	FrameCount           int16
+	CompressorName       [32]byte
+	Depth                int16
+	ColorTableId         int16
+	Conf                 *AVC1Conf
+	Unknowns             []Atom
 	AtomPos
 }
 
 func (self AVC1Desc) Marshal(b []byte) (n int) {
 	pio.PutU32BE(b[4:], uint32(AVC1))
-	n += self.marshal(b[8:])+8
+	n += self.marshal(b[8:]) + 8
 	pio.PutU32BE(b[0:], uint32(n))
 	return
 }
@@ -2154,7 +2172,7 @@ func (self *AVC1Desc) Unmarshal(b []byte, offset int) (n int, err error) {
 			}
 		default:
 			{
-				atom := &Dummy{Tag_: tag, Data: b[n:n+size]}
+				atom := &Dummy{Tag_: tag, Data: b[n : n+size]}
 				if _, err = atom.Unmarshal(b[n:n+size], offset+n); err != nil {
 					err = parseErr("", n+offset, err)
 					return
@@ -2175,13 +2193,13 @@ func (self AVC1Desc) Children() (r []Atom) {
 }
 
 type AVC1Conf struct {
-	Data	[]byte
+	Data []byte
 	AtomPos
 }
 
 func (self AVC1Conf) Marshal(b []byte) (n int) {
 	pio.PutU32BE(b[4:], uint32(AVCC))
-	n += self.marshal(b[8:])+8
+	n += self.marshal(b[8:]) + 8
 	pio.PutU32BE(b[0:], uint32(n))
 	return
 }
@@ -2207,15 +2225,15 @@ func (self AVC1Conf) Children() (r []Atom) {
 }
 
 type TimeToSample struct {
-	Version	uint8
-	Flags	uint32
-	Entries	[]TimeToSampleEntry
+	Version uint8
+	Flags   uint32
+	Entries []TimeToSampleEntry
 	AtomPos
 }
 
 func (self TimeToSample) Marshal(b []byte) (n int) {
 	pio.PutU32BE(b[4:], uint32(STTS))
-	n += self.marshal(b[8:])+8
+	n += self.marshal(b[8:]) + 8
 	pio.PutU32BE(b[0:], uint32(n))
 	return
 }
@@ -2237,7 +2255,7 @@ func (self TimeToSample) Len() (n int) {
 	n += 1
 	n += 3
 	n += 4
-	n += LenTimeToSampleEntry*len(self.Entries)
+	n += LenTimeToSampleEntry * len(self.Entries)
 	return
 }
 func (self *TimeToSample) Unmarshal(b []byte, offset int) (n int, err error) {
@@ -2274,8 +2292,8 @@ func (self TimeToSample) Children() (r []Atom) {
 }
 
 type TimeToSampleEntry struct {
-	Count		uint32
-	Duration	uint32
+	Count    uint32
+	Duration uint32
 }
 
 func GetTimeToSampleEntry(b []byte) (self TimeToSampleEntry) {
@@ -2291,15 +2309,15 @@ func PutTimeToSampleEntry(b []byte, self TimeToSampleEntry) {
 const LenTimeToSampleEntry = 8
 
 type SampleToChunk struct {
-	Version	uint8
-	Flags	uint32
-	Entries	[]SampleToChunkEntry
+	Version uint8
+	Flags   uint32
+	Entries []SampleToChunkEntry
 	AtomPos
 }
 
 func (self SampleToChunk) Marshal(b []byte) (n int) {
 	pio.PutU32BE(b[4:], uint32(STSC))
-	n += self.marshal(b[8:])+8
+	n += self.marshal(b[8:]) + 8
 	pio.PutU32BE(b[0:], uint32(n))
 	return
 }
@@ -2321,7 +2339,7 @@ func (self SampleToChunk) Len() (n int) {
 	n += 1
 	n += 3
 	n += 4
-	n += LenSampleToChunkEntry*len(self.Entries)
+	n += LenSampleToChunkEntry * len(self.Entries)
 	return
 }
 func (self *SampleToChunk) Unmarshal(b []byte, offset int) (n int, err error) {
@@ -2358,9 +2376,9 @@ func (self SampleToChunk) Children() (r []Atom) {
 }
 
 type SampleToChunkEntry struct {
-	FirstChunk	uint32
-	SamplesPerChunk	uint32
-	SampleDescId	uint32
+	FirstChunk      uint32
+	SamplesPerChunk uint32
+	SampleDescId    uint32
 }
 
 func GetSampleToChunkEntry(b []byte) (self SampleToChunkEntry) {
@@ -2378,15 +2396,15 @@ func PutSampleToChunkEntry(b []byte, self SampleToChunkEntry) {
 const LenSampleToChunkEntry = 12
 
 type CompositionOffset struct {
-	Version	uint8
-	Flags	uint32
-	Entries	[]CompositionOffsetEntry
+	Version uint8
+	Flags   uint32
+	Entries []CompositionOffsetEntry
 	AtomPos
 }
 
 func (self CompositionOffset) Marshal(b []byte) (n int) {
 	pio.PutU32BE(b[4:], uint32(CTTS))
-	n += self.marshal(b[8:])+8
+	n += self.marshal(b[8:]) + 8
 	pio.PutU32BE(b[0:], uint32(n))
 	return
 }
@@ -2408,7 +2426,7 @@ func (self CompositionOffset) Len() (n int) {
 	n += 1
 	n += 3
 	n += 4
-	n += LenCompositionOffsetEntry*len(self.Entries)
+	n += LenCompositionOffsetEntry * len(self.Entries)
 	return
 }
 func (self *CompositionOffset) Unmarshal(b []byte, offset int) (n int, err error) {
@@ -2445,8 +2463,8 @@ func (self CompositionOffset) Children() (r []Atom) {
 }
 
 type CompositionOffsetEntry struct {
-	Count	uint32
-	Offset	uint32
+	Count  uint32
+	Offset uint32
 }
 
 func GetCompositionOffsetEntry(b []byte) (self CompositionOffsetEntry) {
@@ -2462,15 +2480,15 @@ func PutCompositionOffsetEntry(b []byte, self CompositionOffsetEntry) {
 const LenCompositionOffsetEntry = 8
 
 type SyncSample struct {
-	Version	uint8
-	Flags	uint32
-	Entries	[]uint32
+	Version uint8
+	Flags   uint32
+	Entries []uint32
 	AtomPos
 }
 
 func (self SyncSample) Marshal(b []byte) (n int) {
 	pio.PutU32BE(b[4:], uint32(STSS))
-	n += self.marshal(b[8:])+8
+	n += self.marshal(b[8:]) + 8
 	pio.PutU32BE(b[0:], uint32(n))
 	return
 }
@@ -2492,7 +2510,7 @@ func (self SyncSample) Len() (n int) {
 	n += 1
 	n += 3
 	n += 4
-	n += 4*len(self.Entries)
+	n += 4 * len(self.Entries)
 	return
 }
 func (self *SyncSample) Unmarshal(b []byte, offset int) (n int, err error) {
@@ -2529,15 +2547,15 @@ func (self SyncSample) Children() (r []Atom) {
 }
 
 type ChunkOffset struct {
-	Version	uint8
-	Flags	uint32
-	Entries	[]uint32
+	Version uint8
+	Flags   uint32
+	Entries []uint32
 	AtomPos
 }
 
 func (self ChunkOffset) Marshal(b []byte) (n int) {
 	pio.PutU32BE(b[4:], uint32(STCO))
-	n += self.marshal(b[8:])+8
+	n += self.marshal(b[8:]) + 8
 	pio.PutU32BE(b[0:], uint32(n))
 	return
 }
@@ -2559,7 +2577,7 @@ func (self ChunkOffset) Len() (n int) {
 	n += 1
 	n += 3
 	n += 4
-	n += 4*len(self.Entries)
+	n += 4 * len(self.Entries)
 	return
 }
 func (self *ChunkOffset) Unmarshal(b []byte, offset int) (n int, err error) {
@@ -2596,15 +2614,15 @@ func (self ChunkOffset) Children() (r []Atom) {
 }
 
 type MovieFrag struct {
-	Header		*MovieFragHeader
-	Tracks		[]*TrackFrag
-	Unknowns	[]Atom
+	Header   *MovieFragHeader
+	Tracks   []*TrackFrag
+	Unknowns []Atom
 	AtomPos
 }
 
 func (self MovieFrag) Marshal(b []byte) (n int) {
 	pio.PutU32BE(b[4:], uint32(MOOF))
-	n += self.marshal(b[8:])+8
+	n += self.marshal(b[8:]) + 8
 	pio.PutU32BE(b[0:], uint32(n))
 	return
 }
@@ -2664,7 +2682,7 @@ func (self *MovieFrag) Unmarshal(b []byte, offset int) (n int, err error) {
 			}
 		default:
 			{
-				atom := &Dummy{Tag_: tag, Data: b[n:n+size]}
+				atom := &Dummy{Tag_: tag, Data: b[n : n+size]}
 				if _, err = atom.Unmarshal(b[n:n+size], offset+n); err != nil {
 					err = parseErr("", n+offset, err)
 					return
@@ -2688,15 +2706,15 @@ func (self MovieFrag) Children() (r []Atom) {
 }
 
 type MovieFragHeader struct {
-	Version	uint8
-	Flags	uint32
-	Seqnum	uint32
+	Version uint8
+	Flags   uint32
+	Seqnum  uint32
 	AtomPos
 }
 
 func (self MovieFragHeader) Marshal(b []byte) (n int) {
 	pio.PutU32BE(b[4:], uint32(MFHD))
-	n += self.marshal(b[8:])+8
+	n += self.marshal(b[8:]) + 8
 	pio.PutU32BE(b[0:], uint32(n))
 	return
 }
@@ -2744,16 +2762,16 @@ func (self MovieFragHeader) Children() (r []Atom) {
 }
 
 type TrackFrag struct {
-	Header		*TrackFragHeader
-	DecodeTime	*TrackFragDecodeTime
-	Run		*TrackFragRun
-	Unknowns	[]Atom
+	Header     *TrackFragHeader
+	DecodeTime *TrackFragDecodeTime
+	Run        *TrackFragRun
+	Unknowns   []Atom
 	AtomPos
 }
 
 func (self TrackFrag) Marshal(b []byte) (n int) {
 	pio.PutU32BE(b[4:], uint32(TRAF))
-	n += self.marshal(b[8:])+8
+	n += self.marshal(b[8:]) + 8
 	pio.PutU32BE(b[0:], uint32(n))
 	return
 }
@@ -2828,7 +2846,7 @@ func (self *TrackFrag) Unmarshal(b []byte, offset int) (n int, err error) {
 			}
 		default:
 			{
-				atom := &Dummy{Tag_: tag, Data: b[n:n+size]}
+				atom := &Dummy{Tag_: tag, Data: b[n : n+size]}
 				if _, err = atom.Unmarshal(b[n:n+size], offset+n); err != nil {
 					err = parseErr("", n+offset, err)
 					return
@@ -2855,14 +2873,14 @@ func (self TrackFrag) Children() (r []Atom) {
 }
 
 type MovieExtend struct {
-	Tracks		[]*TrackExtend
-	Unknowns	[]Atom
+	Tracks   []*TrackExtend
+	Unknowns []Atom
 	AtomPos
 }
 
 func (self MovieExtend) Marshal(b []byte) (n int) {
 	pio.PutU32BE(b[4:], uint32(MVEX))
-	n += self.marshal(b[8:])+8
+	n += self.marshal(b[8:]) + 8
 	pio.PutU32BE(b[0:], uint32(n))
 	return
 }
@@ -2907,7 +2925,7 @@ func (self *MovieExtend) Unmarshal(b []byte, offset int) (n int, err error) {
 			}
 		default:
 			{
-				atom := &Dummy{Tag_: tag, Data: b[n:n+size]}
+				atom := &Dummy{Tag_: tag, Data: b[n : n+size]}
 				if _, err = atom.Unmarshal(b[n:n+size], offset+n); err != nil {
 					err = parseErr("", n+offset, err)
 					return
@@ -2928,19 +2946,19 @@ func (self MovieExtend) Children() (r []Atom) {
 }
 
 type TrackExtend struct {
-	Version			uint8
-	Flags			uint32
-	TrackId			uint32
-	DefaultSampleDescIdx	uint32
-	DefaultSampleDuration	uint32
-	DefaultSampleSize	uint32
-	DefaultSampleFlags	uint32
+	Version               uint8
+	Flags                 uint32
+	TrackId               uint32
+	DefaultSampleDescIdx  uint32
+	DefaultSampleDuration uint32
+	DefaultSampleSize     uint32
+	DefaultSampleFlags    uint32
 	AtomPos
 }
 
 func (self TrackExtend) Marshal(b []byte) (n int) {
 	pio.PutU32BE(b[4:], uint32(TREX))
-	n += self.marshal(b[8:])+8
+	n += self.marshal(b[8:]) + 8
 	pio.PutU32BE(b[0:], uint32(n))
 	return
 }
@@ -3024,16 +3042,16 @@ func (self TrackExtend) Children() (r []Atom) {
 }
 
 type SampleSize struct {
-	Version		uint8
-	Flags		uint32
-	SampleSize	uint32
-	Entries		[]uint32
+	Version    uint8
+	Flags      uint32
+	SampleSize uint32
+	Entries    []uint32
 	AtomPos
 }
 
 func (self SampleSize) Marshal(b []byte) (n int) {
 	pio.PutU32BE(b[4:], uint32(STSZ))
-	n += self.marshal(b[8:])+8
+	n += self.marshal(b[8:]) + 8
 	pio.PutU32BE(b[0:], uint32(n))
 	return
 }
@@ -3064,7 +3082,7 @@ func (self SampleSize) Len() (n int) {
 		return
 	}
 	n += 4
-	n += 4*len(self.Entries)
+	n += 4 * len(self.Entries)
 	return
 }
 func (self *SampleSize) Unmarshal(b []byte, offset int) (n int, err error) {
@@ -3110,17 +3128,17 @@ func (self SampleSize) Children() (r []Atom) {
 }
 
 type TrackFragRun struct {
-	Version			uint8
-	Flags			uint32
-	DataOffset		uint32
-	FirstSampleFlags	uint32
-	Entries			[]TrackFragRunEntry
+	Version          uint8
+	Flags            uint32
+	DataOffset       uint32
+	FirstSampleFlags uint32
+	Entries          []TrackFragRunEntry
 	AtomPos
 }
 
 func (self TrackFragRun) Marshal(b []byte) (n int) {
 	pio.PutU32BE(b[4:], uint32(TRUN))
-	n += self.marshal(b[8:])+8
+	n += self.marshal(b[8:]) + 8
 	pio.PutU32BE(b[0:], uint32(n))
 	return
 }
@@ -3151,19 +3169,24 @@ func (self TrackFragRun) marshal(b []byte) (n int) {
 		} else {
 			flags = self.FirstSampleFlags
 		}
+		//log.Printf("TRUN entry[%v]: flags = %v", i, flags)
 		if flags&TRUN_SAMPLE_DURATION != 0 {
+			//log.Printf("TRUN entry[%v]: TRUN_SAMPLE_DURATION = %v, flags = %v", i, entry.Duration, flags)
 			pio.PutU32BE(b[n:], entry.Duration)
 			n += 4
 		}
 		if flags&TRUN_SAMPLE_SIZE != 0 {
+			//log.Printf("TRUN entry[%v]: TRUN_SAMPLE_SIZE = %v, flags = %v", i, entry.Size, flags)
 			pio.PutU32BE(b[n:], entry.Size)
 			n += 4
 		}
 		if flags&TRUN_SAMPLE_FLAGS != 0 {
+			//log.Printf("TRUN entry[%v]: TRUN_SAMPLE_FLAGS = %v, flags = %v", i, entry.Flags, flags)
 			pio.PutU32BE(b[n:], entry.Flags)
 			n += 4
 		}
 		if flags&TRUN_SAMPLE_CTS != 0 {
+			//log.Printf("TRUN entry[%v]: TRUN_SAMPLE_CTS = %v, flags = %v", i, entry.Cts, flags)
 			pio.PutU32BE(b[n:], entry.Cts)
 			n += 4
 		}
@@ -3176,14 +3199,10 @@ func (self TrackFragRun) Len() (n int) {
 	n += 3
 	n += 4
 	if self.Flags&TRUN_DATA_OFFSET != 0 {
-		{
-			n += 4
-		}
+		n += 4
 	}
 	if self.Flags&TRUN_FIRST_SAMPLE_FLAGS != 0 {
-		{
-			n += 4
-		}
+		n += 4
 	}
 
 	for i := range self.Entries {
@@ -3280,10 +3299,10 @@ func (self TrackFragRun) Children() (r []Atom) {
 }
 
 type TrackFragRunEntry struct {
-	Duration	uint32
-	Size		uint32
-	Flags		uint32
-	Cts		uint32
+	Duration uint32
+	Size     uint32
+	Flags    uint32
+	Cts      uint32
 }
 
 func GetTrackFragRunEntry(b []byte) (self TrackFragRunEntry) {
@@ -3303,19 +3322,20 @@ func PutTrackFragRunEntry(b []byte, self TrackFragRunEntry) {
 const LenTrackFragRunEntry = 16
 
 type TrackFragHeader struct {
-	Version		uint8
-	Flags		uint32
-	BaseDataOffset	uint64
-	StsdId		uint32
-	DefaultDuration	uint32
-	DefaultSize	uint32
-	DefaultFlags	uint32
+	Version         uint8
+	Flags           uint32
+	TrackId         uint32
+	BaseDataOffset  uint64
+	StsdId          uint32
+	DefaultDuration uint32
+	DefaultSize     uint32
+	DefaultFlags    uint32
 	AtomPos
 }
 
 func (self TrackFragHeader) Marshal(b []byte) (n int) {
 	pio.PutU32BE(b[4:], uint32(TFHD))
-	n += self.marshal(b[8:])+8
+	n += self.marshal(b[8:]) + 8
 	pio.PutU32BE(b[0:], uint32(n))
 	return
 }
@@ -3324,18 +3344,22 @@ func (self TrackFragHeader) marshal(b []byte) (n int) {
 	n += 1
 	pio.PutU24BE(b[n:], self.Flags)
 	n += 3
+	pio.PutU32BE(b[n:], self.TrackId)
+	n += 4
 	if self.Flags&TFHD_BASE_DATA_OFFSET != 0 {
 		{
 			pio.PutU64BE(b[n:], self.BaseDataOffset)
 			n += 8
 		}
 	}
+
 	if self.Flags&TFHD_STSD_ID != 0 {
 		{
 			pio.PutU32BE(b[n:], self.StsdId)
 			n += 4
 		}
 	}
+
 	if self.Flags&TFHD_DEFAULT_DURATION != 0 {
 		{
 			pio.PutU32BE(b[n:], self.DefaultDuration)
@@ -3360,6 +3384,7 @@ func (self TrackFragHeader) Len() (n int) {
 	n += 8
 	n += 1
 	n += 3
+	n += 4
 	if self.Flags&TFHD_BASE_DATA_OFFSET != 0 {
 		{
 			n += 8
@@ -3402,6 +3427,14 @@ func (self *TrackFragHeader) Unmarshal(b []byte, offset int) (n int, err error) 
 	}
 	self.Flags = pio.U24BE(b[n:])
 	n += 3
+
+	if len(b) < n+4 {
+		err = parseErr("TrackId", n+offset, err)
+		return
+	}
+	self.TrackId = pio.U32BE(b[n:])
+	n += 4
+
 	if self.Flags&TFHD_BASE_DATA_OFFSET != 0 {
 		{
 			if len(b) < n+8 {
@@ -3459,15 +3492,15 @@ func (self TrackFragHeader) Children() (r []Atom) {
 }
 
 type TrackFragDecodeTime struct {
-	Version	uint8
-	Flags	uint32
-	Time	time.Time
+	Version    uint8
+	Flags      uint32
+	DecodeTime uint64
 	AtomPos
 }
 
 func (self TrackFragDecodeTime) Marshal(b []byte) (n int) {
 	pio.PutU32BE(b[4:], uint32(TFDT))
-	n += self.marshal(b[8:])+8
+	n += self.marshal(b[8:]) + 8
 	pio.PutU32BE(b[0:], uint32(n))
 	return
 }
@@ -3477,11 +3510,11 @@ func (self TrackFragDecodeTime) marshal(b []byte) (n int) {
 	pio.PutU24BE(b[n:], self.Flags)
 	n += 3
 	if self.Version != 0 {
-		PutTime64(b[n:], self.Time)
+		pio.PutU64BE(b[n:], self.DecodeTime)
 		n += 8
 	} else {
 
-		PutTime32(b[n:], self.Time)
+		pio.PutU32BE(b[n:], uint32(self.DecodeTime))
 		n += 4
 	}
 	return
@@ -3514,11 +3547,11 @@ func (self *TrackFragDecodeTime) Unmarshal(b []byte, offset int) (n int, err err
 	self.Flags = pio.U24BE(b[n:])
 	n += 3
 	if self.Version != 0 {
-		self.Time = GetTime64(b[n:])
+		self.DecodeTime = pio.U64BE(b[n:])
 		n += 8
 	} else {
 
-		self.Time = GetTime32(b[n:])
+		self.DecodeTime = uint64(pio.U32BE(b[n:]))
 		n += 4
 	}
 	return
