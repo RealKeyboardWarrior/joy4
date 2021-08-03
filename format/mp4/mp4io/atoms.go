@@ -785,6 +785,13 @@ func (self HandlerRefer) marshal(b []byte) (n int) {
 	n += len(self.Type[:])
 	copy(b[n:], self.SubType[:])
 	n += len(self.SubType[:])
+	// TODO: document component
+	pio.PutU32BE(b[n:], uint32(0))
+	n += 4
+	pio.PutU32BE(b[n:], uint32(0))
+	n += 4
+	pio.PutU32BE(b[n:], uint32(0))
+	n += 4
 	copy(b[n:], self.Name[:])
 	n += len(self.Name[:])
 	return
@@ -795,6 +802,10 @@ func (self HandlerRefer) Len() (n int) {
 	n += 3
 	n += len(self.Type[:])
 	n += len(self.SubType[:])
+	// TODO: document component
+	n += 4
+	n += 4
+	n += 4
 	n += len(self.Name[:])
 	return
 }
@@ -825,6 +836,10 @@ func (self *HandlerRefer) Unmarshal(b []byte, offset int) (n int, err error) {
 	}
 	copy(self.SubType[:], b[n:])
 	n += len(self.SubType)
+	// TODO: document component
+	n += 4
+	n += 4
+	n += 4
 	self.Name = b[n:]
 	n += len(b[n:])
 	return
@@ -3154,19 +3169,24 @@ func (self TrackFragRun) marshal(b []byte) (n int) {
 		} else {
 			flags = self.FirstSampleFlags
 		}
+		//log.Printf("TRUN entry[%v]: flags = %v", i, flags)
 		if flags&TRUN_SAMPLE_DURATION != 0 {
+			//log.Printf("TRUN entry[%v]: TRUN_SAMPLE_DURATION = %v, flags = %v", i, entry.Duration, flags)
 			pio.PutU32BE(b[n:], entry.Duration)
 			n += 4
 		}
 		if flags&TRUN_SAMPLE_SIZE != 0 {
+			//log.Printf("TRUN entry[%v]: TRUN_SAMPLE_SIZE = %v, flags = %v", i, entry.Size, flags)
 			pio.PutU32BE(b[n:], entry.Size)
 			n += 4
 		}
 		if flags&TRUN_SAMPLE_FLAGS != 0 {
+			//log.Printf("TRUN entry[%v]: TRUN_SAMPLE_FLAGS = %v, flags = %v", i, entry.Flags, flags)
 			pio.PutU32BE(b[n:], entry.Flags)
 			n += 4
 		}
 		if flags&TRUN_SAMPLE_CTS != 0 {
+			//log.Printf("TRUN entry[%v]: TRUN_SAMPLE_CTS = %v, flags = %v", i, entry.Cts, flags)
 			pio.PutU32BE(b[n:], entry.Cts)
 			n += 4
 		}
@@ -3179,14 +3199,10 @@ func (self TrackFragRun) Len() (n int) {
 	n += 3
 	n += 4
 	if self.Flags&TRUN_DATA_OFFSET != 0 {
-		{
-			n += 4
-		}
+		n += 4
 	}
 	if self.Flags&TRUN_FIRST_SAMPLE_FLAGS != 0 {
-		{
-			n += 4
-		}
+		n += 4
 	}
 
 	for i := range self.Entries {
@@ -3308,6 +3324,7 @@ const LenTrackFragRunEntry = 16
 type TrackFragHeader struct {
 	Version         uint8
 	Flags           uint32
+	TrackId         uint32
 	BaseDataOffset  uint64
 	StsdId          uint32
 	DefaultDuration uint32
@@ -3327,18 +3344,22 @@ func (self TrackFragHeader) marshal(b []byte) (n int) {
 	n += 1
 	pio.PutU24BE(b[n:], self.Flags)
 	n += 3
+	pio.PutU32BE(b[n:], self.TrackId)
+	n += 4
 	if self.Flags&TFHD_BASE_DATA_OFFSET != 0 {
 		{
 			pio.PutU64BE(b[n:], self.BaseDataOffset)
 			n += 8
 		}
 	}
+
 	if self.Flags&TFHD_STSD_ID != 0 {
 		{
 			pio.PutU32BE(b[n:], self.StsdId)
 			n += 4
 		}
 	}
+
 	if self.Flags&TFHD_DEFAULT_DURATION != 0 {
 		{
 			pio.PutU32BE(b[n:], self.DefaultDuration)
@@ -3363,6 +3384,7 @@ func (self TrackFragHeader) Len() (n int) {
 	n += 8
 	n += 1
 	n += 3
+	n += 4
 	if self.Flags&TFHD_BASE_DATA_OFFSET != 0 {
 		{
 			n += 8
@@ -3405,6 +3427,14 @@ func (self *TrackFragHeader) Unmarshal(b []byte, offset int) (n int, err error) 
 	}
 	self.Flags = pio.U24BE(b[n:])
 	n += 3
+
+	if len(b) < n+4 {
+		err = parseErr("TrackId", n+offset, err)
+		return
+	}
+	self.TrackId = pio.U32BE(b[n:])
+	n += 4
+
 	if self.Flags&TFHD_BASE_DATA_OFFSET != 0 {
 		{
 			if len(b) < n+8 {
@@ -3462,9 +3492,9 @@ func (self TrackFragHeader) Children() (r []Atom) {
 }
 
 type TrackFragDecodeTime struct {
-	Version uint8
-	Flags   uint32
-	Time    time.Time
+	Version    uint8
+	Flags      uint32
+	DecodeTime uint64
 	AtomPos
 }
 
@@ -3480,11 +3510,11 @@ func (self TrackFragDecodeTime) marshal(b []byte) (n int) {
 	pio.PutU24BE(b[n:], self.Flags)
 	n += 3
 	if self.Version != 0 {
-		PutTime64(b[n:], self.Time)
+		pio.PutU64BE(b[n:], self.DecodeTime)
 		n += 8
 	} else {
 
-		PutTime32(b[n:], self.Time)
+		pio.PutU32BE(b[n:], uint32(self.DecodeTime))
 		n += 4
 	}
 	return
@@ -3517,11 +3547,11 @@ func (self *TrackFragDecodeTime) Unmarshal(b []byte, offset int) (n int, err err
 	self.Flags = pio.U24BE(b[n:])
 	n += 3
 	if self.Version != 0 {
-		self.Time = GetTime64(b[n:])
+		self.DecodeTime = pio.U64BE(b[n:])
 		n += 8
 	} else {
 
-		self.Time = GetTime32(b[n:])
+		self.DecodeTime = uint64(pio.U32BE(b[n:]))
 		n += 4
 	}
 	return
