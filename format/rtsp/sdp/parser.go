@@ -39,7 +39,7 @@ func Parse(content string) (sess Session, medias []Media) {
 			case "m":
 				if len(fields) > 0 {
 					switch fields[0] {
-					case "audio", "video":
+					case "audio", "video", "application":
 						medias = append(medias, Media{AVType: fields[0]})
 						media = &medias[len(medias)-1]
 						mfields := strings.Split(fields[1], " ")
