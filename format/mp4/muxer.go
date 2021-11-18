@@ -1,15 +1,15 @@
 package mp4
 
 import (
+	"bufio"
 	"fmt"
-	"time"
 	"github.com/kerberos-io/joy4/av"
 	"github.com/kerberos-io/joy4/codec/aacparser"
 	"github.com/kerberos-io/joy4/codec/h264parser"
 	"github.com/kerberos-io/joy4/format/mp4/mp4io"
 	"github.com/kerberos-io/joy4/utils/bits/pio"
 	"io"
-	"bufio"
+	"time"
 )
 
 type Muxer struct {
@@ -17,6 +17,8 @@ type Muxer struct {
 	bufw       *bufio.Writer
 	wpos       int64
 	streams    []*Stream
+	videoCodecIndex int
+	AudioCodecIndex int
 }
 
 func NewMuxer(w io.WriteSeeker) *Muxer {
@@ -26,14 +28,18 @@ func NewMuxer(w io.WriteSeeker) *Muxer {
 	}
 }
 
-func (self *Muxer) newStream(codec av.CodecData) (err error) {
+func (self *Muxer) newStream(codec av.CodecData, index int, withoutAudio bool) (err error) {
 	switch codec.Type() {
-	case av.H264, av.AAC:
-
+	case av.H264:
+		self.videoCodecIndex = index
+	case av.AAC:
 	default:
-		err = fmt.Errorf("mp4: codec type=%v is not supported", codec.Type())
-		return
+		self.AudioCodecIndex = index
+		if withoutAudio {
+			return
+		}
 	}
+
 	stream := &Stream{CodecData: codec}
 
 	stream.sample = &mp4io.SampleTable{
@@ -146,11 +152,8 @@ func (self *Stream) fillTrackAtom() (err error) {
 
 func (self *Muxer) WriteHeader(streams []av.CodecData) (err error) {
 	self.streams = []*Stream{}
-	for _, stream := range streams {
-		if err = self.newStream(stream); err != nil {
-			// return
-			// no need to stop the recording if a codec doesnt match, still try to...
-		}
+	for index, stream := range streams {
+		if err = self.newStream(stream, index, false); err != nil {}
 	}
 
 	taghdr := make([]byte, 8)
@@ -170,18 +173,19 @@ func (self *Muxer) WriteHeader(streams []av.CodecData) (err error) {
 }
 
 func (self *Muxer) WritePacket(pkt av.Packet) (err error) {
-	// Check if pkt.Idx is a valid stream
-	if len(self.streams) < int(pkt.Idx + 1) {
+	stream := self.streams[pkt.Idx]
+	switch stream.Type() {
+	case av.H264, av.AAC:
+		if stream.lastpkt != nil {
+			if err = stream.writePacket(*stream.lastpkt, pkt.Time-stream.lastpkt.Time); err != nil {
+				return
+			}
+		}
+		stream.lastpkt = &pkt
+		return
+	default:
 		return
 	}
-	stream := self.streams[pkt.Idx]
-	if stream.lastpkt != nil {
-		if err = stream.writePacket(*stream.lastpkt, pkt.Time-stream.lastpkt.Time); err != nil {
-			return
-		}
-	}
-	stream.lastpkt = &pkt
-	return
 }
 
 func (self *Stream) writePacket(pkt av.Packet, rawdur time.Duration) (err error) {
@@ -225,12 +229,17 @@ func (self *Stream) writePacket(pkt av.Packet, rawdur time.Duration) (err error)
 }
 
 func (self *Muxer) WriteTrailer() (err error) {
+
 	for _, stream := range self.streams {
-		if stream.lastpkt != nil {
-			if err = stream.writePacket(*stream.lastpkt, 0); err != nil {
-				return
+		switch stream.Type() {
+		case av.H264, av.AAC:
+			if stream.lastpkt != nil {
+				if err = stream.writePacket(*stream.lastpkt, 0); err != nil {
+					//return
+				}
+				stream.lastpkt = nil
 			}
-			stream.lastpkt = nil
+		default:
 		}
 	}
 
@@ -245,15 +254,18 @@ func (self *Muxer) WriteTrailer() (err error) {
 	maxDur := time.Duration(0)
 	timeScale := int64(10000)
 	for _, stream := range self.streams {
-		if err = stream.fillTrackAtom(); err != nil {
-			return
+		switch stream.Type() {
+		case av.H264, av.AAC:
+			if err = stream.fillTrackAtom(); err != nil {
+				return
+			}
+			dur := stream.tsToTime(stream.duration)
+			stream.trackAtom.Header.Duration = int32(timeToTs(dur, timeScale))
+			if dur > maxDur {
+				maxDur = dur
+			}
+			moov.Tracks = append(moov.Tracks, stream.trackAtom)
 		}
-		dur := stream.tsToTime(stream.duration)
-		stream.trackAtom.Header.Duration = int32(timeToTs(dur, timeScale))
-		if dur > maxDur {
-			maxDur = dur
-		}
-		moov.Tracks = append(moov.Tracks, stream.trackAtom)
 	}
 	moov.Header.TimeScale = int32(timeScale)
 	moov.Header.Duration = int32(timeToTs(maxDur, timeScale))
