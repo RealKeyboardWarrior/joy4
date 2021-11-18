@@ -653,7 +653,12 @@ func (self *Client) Describe() (streams []sdp.Media, err error) {
 	_, medias := sdp.Parse(body)
 
 	self.streams = []*Stream{}
-	for _, media := range medias {
+	for i, media := range medias {
+		// Remove any media entries that are not audio or video (e.g application, from ONVIF)
+		if media.AVType != "audio" && media.AVType != "video" {
+			medias = append(medias[:i], medias[i+1:]...)
+			continue
+		}
 		stream := &Stream{Sdp: media, client: self}
 		stream.makeCodecData()
 		self.streams = append(self.streams, stream)
