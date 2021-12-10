@@ -8,13 +8,13 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
-	"github.com/kerberos-io/joy4/utils/bits/pio"
 	"github.com/kerberos-io/joy4/av"
 	"github.com/kerberos-io/joy4/av/avutil"
 	"github.com/kerberos-io/joy4/codec"
 	"github.com/kerberos-io/joy4/codec/aacparser"
 	"github.com/kerberos-io/joy4/codec/h264parser"
 	"github.com/kerberos-io/joy4/format/rtsp/sdp"
+	"github.com/kerberos-io/joy4/utils/bits/pio"
 	"io"
 	"net"
 	"net/textproto"
@@ -111,9 +111,9 @@ func DialTimeout(uri string, timeout time.Duration) (self *Client, err error) {
 		DebugRtp:   DebugRtp,
 		DebugRtsp:  DebugRtsp,
 		SkipErrRtpBlock: SkipErrRtpBlock,
-		RtspTimeout: 30 * time.Second,
-		RtpTimeout: 30 * time.Second,
-		RtpKeepAliveTimeout: 5 * time.Second,
+		RtspTimeout: 10 * time.Second,
+		RtpTimeout: 10 * time.Second,
+		RtpKeepAliveTimeout: 0 * time.Second,
 	}
 
 	return
