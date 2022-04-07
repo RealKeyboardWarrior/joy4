@@ -1,5 +1,5 @@
 
 package pio
 
-var RecommendBufioSize = 4096
+var RecommendBufioSize = 1024*64
 

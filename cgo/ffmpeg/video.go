@@ -1,9 +1,20 @@
 package ffmpeg
 
+import "C"
+import (
+	"github.com/kerberos-io/joy4/av"
+	"github.com/kerberos-io/joy4/codec/h264parser"
+	"image"
+)
+
 /*
 #include "ffmpeg.h"
 int wrap_avcodec_decode_video2(AVCodecContext *ctx, AVFrame *frame, void *data, int size, int *got) {
 	struct AVPacket pkt = {.data = data, .size = size};
+	return avcodec_decode_video2(ctx, frame, got, &pkt);
+}
+int wrap_avcodec_decode_video2_empty(AVCodecContext *ctx, AVFrame *frame, void *data, int size, int *got) {
+	struct AVPacket pkt = {.data = NULL, .size = 0};
 	return avcodec_decode_video2(ctx, frame, got, &pkt);
 }
 int wrap_av_opt_set_int_list(void* obj, const char* name, void* val, int64_t term, int64_t flags) {
@@ -17,13 +28,9 @@ int wrap_av_opt_set_int_list(void* obj, const char* name, void* val, int64_t ter
 import "C"
 import (
 	"fmt"
-	"image"
 	"reflect"
 	"runtime"
 	"unsafe"
-
-	"github.com/kerberos-io/joy4/av"
-	"github.com/kerberos-io/joy4/codec/h264parser"
 )
 
 // VideoFramerate represents a FPS value with a fraction (numerator + denominator)
@@ -771,7 +778,6 @@ func (self *VideoDecoder) Decode(pkt []byte) (img *VideoFrame, err error) {
 	cerr := C.wrap_avcodec_decode_video2(ff.codecCtx, frame, unsafe.Pointer(&pkt[0]), C.int(len(pkt)), &cgotimg)
 	if cerr < C.int(0) {
 		err = fmt.Errorf("ffmpeg: avcodec_decode_video2 failed: %d", cerr)
-		C.av_frame_free(&frame)
 		return
 	}
 
@@ -781,27 +787,54 @@ func (self *VideoDecoder) Decode(pkt []byte) (img *VideoFrame, err error) {
 		ys := int(frame.linesize[0])
 		cs := int(frame.linesize[1])
 
-		num, den := self.GetFramerate()
-
-		img = &VideoFrame{
-			Image: image.YCbCr{
-				Y:              fromCPtr(unsafe.Pointer(frame.data[0]), ys*h),
-				Cb:             fromCPtr(unsafe.Pointer(frame.data[1]), cs*h/2),
-				Cr:             fromCPtr(unsafe.Pointer(frame.data[2]), cs*h/2),
-				YStride:        ys,
-				CStride:        cs,
-				SubsampleRatio: image.YCbCrSubsampleRatio420,
-				Rect:           image.Rect(0, 0, w, h),
-			},
-			frame: frame,
-			Framerate: VideoFramerate{
-				Num: num,
-				Den: den,
-			},
-		}
+		img = &VideoFrame{Image: image.YCbCr{
+			Y:              fromCPtr(unsafe.Pointer(frame.data[0]), ys*h),
+			Cb:             fromCPtr(unsafe.Pointer(frame.data[1]), cs*h/2),
+			Cr:             fromCPtr(unsafe.Pointer(frame.data[2]), cs*h/2),
+			YStride:        ys,
+			CStride:        cs,
+			SubsampleRatio: image.YCbCrSubsampleRatio420,
+			Rect:           image.Rect(0, 0, w, h),
+		}, frame: frame}
 		runtime.SetFinalizer(img, freeVideoFrame)
-	} else {
-		C.av_frame_free(&frame)
+	}
+
+	return
+}
+
+func (self *VideoDecoder) DecodeSingle(pkt []byte) (img *VideoFrame, err error) {
+	ff := &self.ff.ff
+	cgotimg := C.int(0)
+	frame := C.av_frame_alloc()
+	cerr := C.wrap_avcodec_decode_video2(ff.codecCtx, frame, unsafe.Pointer(&pkt[0]), C.int(len(pkt)), &cgotimg)
+	if cerr < C.int(0) {
+		err = fmt.Errorf("ffmpeg: avcodec_decode_video2 failed: %d", cerr)
+		return
+	}
+	//https://stackoverflow.com/questions/25431413/decode-compressed-frame-to-memory-using-libav-avcodec-decode-video2
+	if cgotimg == C.int(0) {
+		cerr = C.wrap_avcodec_decode_video2_empty(ff.codecCtx, frame, unsafe.Pointer(&pkt[0]), C.int(0), &cgotimg)
+		if cerr < C.int(0) {
+			err = fmt.Errorf("ffmpeg: avcodec_decode_video2 failed: %d", cerr)
+			return
+		}
+	}
+	if cgotimg != C.int(0) {
+		w := int(frame.width)
+		h := int(frame.height)
+		ys := int(frame.linesize[0])
+		cs := int(frame.linesize[1])
+
+		img = &VideoFrame{Image: image.YCbCr{
+			Y:              fromCPtr(unsafe.Pointer(frame.data[0]), ys*h),
+			Cb:             fromCPtr(unsafe.Pointer(frame.data[1]), cs*h/2),
+			Cr:             fromCPtr(unsafe.Pointer(frame.data[2]), cs*h/2),
+			YStride:        ys,
+			CStride:        cs,
+			SubsampleRatio: image.YCbCrSubsampleRatio420,
+			Rect:           image.Rect(0, 0, w, h),
+		}, frame: frame}
+		runtime.SetFinalizer(img, freeVideoFrame)
 	}
 
 	return

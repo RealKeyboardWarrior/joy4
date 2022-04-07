@@ -116,12 +116,19 @@ func (self ChannelLayout) Count() (n int) {
 type CodecType uint32
 
 var (
-	H264 = MakeVideoCodecType(avCodecTypeMagic + 1)
-	AAC       = MakeAudioCodecType(avCodecTypeMagic + 1)
-	PCM_MULAW = MakeAudioCodecType(avCodecTypeMagic + 2)
-	PCM_ALAW  = MakeAudioCodecType(avCodecTypeMagic + 3)
-	SPEEX = MakeAudioCodecType(avCodecTypeMagic + 4)
+	H264       = MakeVideoCodecType(avCodecTypeMagic + 1)
+	H265       = MakeVideoCodecType(avCodecTypeMagic + 2)
+	JPEG       = MakeVideoCodecType(avCodecTypeMagic + 3)
+	VP8        = MakeVideoCodecType(avCodecTypeMagic + 4)
+	VP9        = MakeVideoCodecType(avCodecTypeMagic + 5)
+	AV1        = MakeVideoCodecType(avCodecTypeMagic + 6)
+	AAC        = MakeAudioCodecType(avCodecTypeMagic + 1)
+	PCM_MULAW  = MakeAudioCodecType(avCodecTypeMagic + 2)
+	PCM_ALAW   = MakeAudioCodecType(avCodecTypeMagic + 3)
+	SPEEX      = MakeAudioCodecType(avCodecTypeMagic + 4)
 	NELLYMOSER = MakeAudioCodecType(avCodecTypeMagic + 5)
+	PCM        = MakeAudioCodecType(avCodecTypeMagic + 6)
+	OPUS       = MakeAudioCodecType(avCodecTypeMagic + 7)
 )
 
 const codecTypeAudioBit = 0x1
@@ -131,6 +138,16 @@ func (self CodecType) String() string {
 	switch self {
 	case H264:
 		return "H264"
+	case H265:
+		return "H265"
+	case JPEG:
+		return "JPEG"
+	case VP8:
+		return "VP8"
+	case VP9:
+		return "VP9"
+	case AV1:
+		return "AV1"
 	case AAC:
 		return "AAC"
 	case PCM_MULAW:
@@ -141,10 +158,13 @@ func (self CodecType) String() string {
 		return "SPEEX"
 	case NELLYMOSER:
 		return "NELLYMOSER"
+	case PCM:
+		return "PCM"
+	case OPUS:
+		return "OPUS"
 	}
 	return ""
 }
-
 func (self CodecType) IsAudio() bool {
 	return self&codecTypeAudioBit != 0
 }
