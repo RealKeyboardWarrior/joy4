@@ -48,6 +48,7 @@ type VideoFrame struct {
 
 func (self *VideoFrame) Free() {
 	self.Image = image.YCbCr{}
+	self.ImageGray = image.Gray{}
 	if self.Frame != nil {
 		C.av_frame_free(&self.Frame)
 		self.Frame = nil
@@ -789,6 +790,7 @@ func (self *VideoDecoder) Decode(pkt []byte) (img *VideoFrame, err error) {
 		ys := int(frame.linesize[0])
 
 		img = &VideoFrame{
+			Frame: frame,
 			Image: image.YCbCr{
 				Y:              fromCPtr(unsafe.Pointer(frame.data[0]), w*h),
 				Cb:             fromCPtr(unsafe.Pointer(frame.data[1]), w*h/4),
