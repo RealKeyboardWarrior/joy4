@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"image"
 	"reflect"
-	"runtime"
 	"unsafe"
 
 	"github.com/kerberos-io/joy4/av"
@@ -55,7 +54,7 @@ func (self *VideoFrame) Free() {
 	}
 }
 
-func freeVideoFrame(self *VideoFrame) {
+func FreeVideoFrame(self *VideoFrame) {
 	self.Free()
 }
 
@@ -285,7 +284,7 @@ func (self *FramerateConverter) ConvertFramerate(in *VideoFrame) (out []*VideoFr
 		f.Image.Rect = in.Image.Rect
 		f.Framerate.Num = self.OutFpsNum
 		f.Framerate.Den = self.OutFpsDen
-		runtime.SetFinalizer(f, freeVideoFrame)
+		//runtime.SetFinalizer(f, FreeVideoFrame)
 		out = append(out, f)
 	}
 	return
@@ -469,6 +468,9 @@ func (enc *VideoEncoder) Setup() (err error) {
 
 	// Leave codecData uninitialized until SPS and PPS are received (see in encodeOne())
 	enc.codecData = h264parser.CodecData{}
+
+	// Cleanup the frame, as it's not required anymore
+	C.av_frame_free(&ff.frame)
 
 	return
 }
@@ -805,7 +807,7 @@ func (self *VideoDecoder) Decode(pkt []byte) (img *VideoFrame, err error) {
 				Stride: ys,
 				Rect:   image.Rect(0, 0, w, h),
 			}}
-		runtime.SetFinalizer(img, freeVideoFrame)
+		//runtime.SetFinalizer(img, FreeVideoFrame)
 	}
 
 	return
@@ -832,18 +834,24 @@ func (self *VideoDecoder) DecodeSingle(pkt []byte) (img *VideoFrame, err error) 
 		w := int(frame.width)
 		h := int(frame.height)
 		ys := int(frame.linesize[0])
-		cs := int(frame.linesize[1])
 
-		img = &VideoFrame{Image: image.YCbCr{
-			Y:              fromCPtr(unsafe.Pointer(frame.data[0]), ys*h),
-			Cb:             fromCPtr(unsafe.Pointer(frame.data[1]), cs*h/2),
-			Cr:             fromCPtr(unsafe.Pointer(frame.data[2]), cs*h/2),
-			YStride:        ys,
-			CStride:        cs,
-			SubsampleRatio: image.YCbCrSubsampleRatio420,
-			Rect:           image.Rect(0, 0, w, h),
-		}, Frame: frame}
-		runtime.SetFinalizer(img, freeVideoFrame)
+		img = &VideoFrame{
+			Frame: frame,
+			Image: image.YCbCr{
+				Y:              fromCPtr(unsafe.Pointer(frame.data[0]), w*h),
+				Cb:             fromCPtr(unsafe.Pointer(frame.data[1]), w*h/4),
+				Cr:             fromCPtr(unsafe.Pointer(frame.data[2]), w*h/4),
+				YStride:        ys,
+				CStride:        ys / 2,
+				SubsampleRatio: image.YCbCrSubsampleRatio420,
+				Rect:           image.Rect(0, 0, w, h),
+			},
+			ImageGray: image.Gray{
+				Pix:    fromCPtr(unsafe.Pointer(frame.data[0]), w*h),
+				Stride: ys,
+				Rect:   image.Rect(0, 0, w, h),
+			}}
+		//runtime.SetFinalizer(img, FreeVideoFrame)
 	}
 
 	return
