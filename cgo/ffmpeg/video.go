@@ -520,11 +520,36 @@ func (enc *VideoEncoder) encodeOne(img *VideoFrame) (gotpkt bool, pkt av.Packet,
 	ff.frame.pts = C.int64_t(enc.pts)
 	enc.pts++
 
-	cerr := C.avcodec_encode_video2(ff.codecCtx, &cpkt, ff.frame, &cgotpkt)
+	/* Should be replaced by ->
+	https://stackoverflow.com/questions/59470927/how-to-replace-avcodec-encode-audio2-avcodec-encode-video2-with-avcodec-send
+	ret = avcodec_send_frame(c, frame);
+	if (ret < 0) {
+		fprintf(stderr, "Error sending a frame for encoding\n");
+		exit(1);
+	}
+	while (ret >= 0) {
+		ret = avcodec_receive_packet(c, &pkt);
+		if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF){
+			return (ret==AVERROR(EAGAIN)) ? 0:1;
+		}
+		else if (ret < 0) {
+			fprintf(stderr, "Error during encoding\n");
+			exit(1);
+		}
+		ret = write_frame(oc, &c->time_base, ost->st, &pkt);
+		if (ret < 0) {
+		fprintf(stderr, "Error while writing video frame: %s\n", av_err2str(ret));
+		exit(1);
+		}
+		av_packet_unref(&pkt);
+	}
+	return (frame) ? 0 : 1;*/
+
+	/*cerr := C.avcodec_encode_video2(ff.codecCtx, &cpkt, ff.frame, &cgotpkt)
 	if cerr < C.int(0) {
 		err = fmt.Errorf("ffmpeg: avcodec_encode_video2 failed: %d", cerr)
 		return
-	}
+	}*/
 
 	var avpkt av.Packet
 	if cgotpkt != 0 {
