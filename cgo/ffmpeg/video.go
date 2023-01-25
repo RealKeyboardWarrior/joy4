@@ -555,9 +555,9 @@ func (enc *VideoEncoder) encodeOne(img *VideoFrame) (gotpkt bool, pkt av.Packet,
 	if cgotpkt != 0 {
 		gotpkt = true
 
-		if debug {
-			fmt.Println("encoded frame with pts:", cpkt.pts, " dts:", cpkt.dts, "duration:", cpkt.duration, "flags:", cpkt.flags)
-		}
+		//if debug {
+		//	fmt.Println("encoded frame with pts:", cpkt.pts, " dts:", cpkt.dts, "duration:", cpkt.duration, "flags:", cpkt.flags)
+		//}
 
 		avpkt.Data = C.GoBytes(unsafe.Pointer(cpkt.data), cpkt.size)
 		avpkt.IsKeyFrame = (cpkt.flags & C.AV_PKT_FLAG_KEY) == C.AV_PKT_FLAG_KEY
