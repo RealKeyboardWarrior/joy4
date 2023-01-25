@@ -3,9 +3,6 @@ package ffmpeg
 /*
 #cgo LDFLAGS: -lavformat -lavutil -lavcodec -lswscale
 #include "ffmpeg.h"
-void ffinit() {
-	av_register_all();
-}
 */
 import "C"
 import (
@@ -41,7 +38,6 @@ func SetLogLevel(level int) {
 }
 
 func init() {
-	C.ffinit()
 }
 
 type ffctx struct {
