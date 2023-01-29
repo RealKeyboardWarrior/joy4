@@ -230,6 +230,13 @@ func (self *Stream) writePacket(pkt av.Packet, rawdur time.Duration) (err error)
 	return
 }
 
+func (self *Muxer) Flush() (err error) {
+	if err = self.bufw.Flush(); err != nil {
+		return
+	}
+	return
+}
+
 func (self *Muxer) WriteTrailer() (err error) {
 
 	moov := &mp4io.Movie{}
