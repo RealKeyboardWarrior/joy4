@@ -239,6 +239,93 @@ func (self *Muxer) Flush() (err error) {
 
 func (self *Muxer) WriteTrailer() (err error) {
 
+	for _, stream := range self.streams {
+		switch stream.Type() {
+		case av.H264, av.AAC:
+			if stream.lastpkt != nil {
+				if err = stream.writePacket(*stream.lastpkt, 0); err != nil {
+					//return
+				}
+				stream.lastpkt = nil
+			}
+		default:
+		}
+	}
+
+	moov := &mp4io.Movie{}
+	moov.Header = &mp4io.MovieHeader{
+		PreferredRate:   1,
+		PreferredVolume: 1,
+		Matrix:          [9]int32{0x10000, 0, 0, 0, 0x10000, 0, 0, 0, 0x40000000},
+		NextTrackId:     2,
+	}
+
+	maxDur := time.Duration(0)
+	timeScale := int64(10000)
+	for _, stream := range self.streams {
+		switch stream.Type() {
+		case av.H264, av.AAC:
+			if err = stream.fillTrackAtom(); err != nil {
+				return
+			}
+			dur := stream.tsToTime(stream.duration)
+			stream.trackAtom.Header.Duration = int32(timeToTs(dur, timeScale))
+			if dur > maxDur {
+				maxDur = dur
+			}
+			moov.Tracks = append(moov.Tracks, stream.trackAtom)
+		}
+	}
+	moov.Header.TimeScale = int32(timeScale)
+	moov.Header.Duration = int32(timeToTs(maxDur, timeScale))
+
+	if err = self.bufw.Flush(); err != nil {
+		return
+	}
+
+	var mdatsize int64
+	if mdatsize, err = self.w.Seek(0, 1); err != nil {
+		return
+	}
+	if _, err = self.w.Seek(0, 0); err != nil {
+		return
+	}
+	taghdr := make([]byte, 4)
+	pio.PutU32BE(taghdr, uint32(mdatsize))
+	if _, err = self.w.Write(taghdr); err != nil {
+		return
+	}
+	taghdr = nil
+
+	if _, err = self.w.Seek(0, 2); err != nil {
+		return
+	}
+	b := make([]byte, moov.Len())
+	moov.Marshal(b)
+	if _, err = self.w.Write(b); err != nil {
+		return
+	}
+	b = nil
+	self.bufw = nil
+	self.streams = nil
+	return
+}
+
+func (self *Muxer) WriteTrailerWithPacket(pkt av.Packet) (err error) {
+
+	for _, stream := range self.streams {
+		switch stream.Type() {
+		case av.H264, av.AAC:
+			if stream.lastpkt != nil {
+				if err = stream.writePacket(*stream.lastpkt, pkt.Time-stream.lastpkt.Time); err != nil {
+					//return
+				}
+				stream.lastpkt = nil
+			}
+		default:
+		}
+	}
+
 	moov := &mp4io.Movie{}
 	moov.Header = &mp4io.MovieHeader{
 		PreferredRate:   1,
