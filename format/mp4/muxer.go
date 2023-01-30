@@ -292,7 +292,6 @@ func (self *Muxer) WriteTrailer() (err error) {
 		return
 	}
 	b = nil
-	self.streams = nil
 	return
 }
 
@@ -361,6 +360,17 @@ func (self *Muxer) WriteTrailerWithPacket(pkt av.Packet) (err error) {
 		return
 	}
 	b = nil
+	return
+}
+
+func (self *Muxer) Close() (err error) {
+	for _, stream := range self.streams {
+		stream.muxer = nil
+		stream.trackAtom = nil
+		stream.sample = nil
+		stream.lastpkt = nil
+		stream = nil
+	}
 	self.streams = nil
 	return
 }
