@@ -1,7 +1,6 @@
 package mp4
 
 import (
-	"bufio"
 	"fmt"
 	"io"
 	"time"
@@ -15,7 +14,6 @@ import (
 
 type Muxer struct {
 	w               io.WriteSeeker
-	bufw            *bufio.Writer
 	wpos            int64
 	streams         []*Stream
 	videoCodecIndex int
@@ -24,8 +22,7 @@ type Muxer struct {
 
 func NewMuxer(w io.WriteSeeker) *Muxer {
 	return &Muxer{
-		w:    w,
-		bufw: bufio.NewWriterSize(w, pio.RecommendBufioSize),
+		w: w,
 	}
 }
 
@@ -196,7 +193,7 @@ func (self *Stream) writePacket(pkt av.Packet, rawdur time.Duration) (err error)
 		return
 	}
 
-	if _, err = self.muxer.bufw.Write(pkt.Data); err != nil {
+	if _, err = self.muxer.w.Write(pkt.Data); err != nil {
 		return
 	}
 
@@ -227,13 +224,6 @@ func (self *Stream) writePacket(pkt av.Packet, rawdur time.Duration) (err error)
 	self.sample.SampleSize.Entries = append(self.sample.SampleSize.Entries, uint32(len(pkt.Data)))
 
 	self.muxer.wpos += int64(len(pkt.Data))
-	return
-}
-
-func (self *Muxer) Flush() (err error) {
-	if err = self.bufw.Flush(); err != nil {
-		return
-	}
 	return
 }
 
@@ -279,10 +269,6 @@ func (self *Muxer) WriteTrailer() (err error) {
 	moov.Header.TimeScale = int32(timeScale)
 	moov.Header.Duration = int32(timeToTs(maxDur, timeScale))
 
-	if err = self.bufw.Flush(); err != nil {
-		return
-	}
-
 	var mdatsize int64
 	if mdatsize, err = self.w.Seek(0, 1); err != nil {
 		return
@@ -306,7 +292,6 @@ func (self *Muxer) WriteTrailer() (err error) {
 		return
 	}
 	b = nil
-	self.bufw = nil
 	self.streams = nil
 	return
 }
@@ -353,10 +338,6 @@ func (self *Muxer) WriteTrailerWithPacket(pkt av.Packet) (err error) {
 	moov.Header.TimeScale = int32(timeScale)
 	moov.Header.Duration = int32(timeToTs(maxDur, timeScale))
 
-	if err = self.bufw.Flush(); err != nil {
-		return
-	}
-
 	var mdatsize int64
 	if mdatsize, err = self.w.Seek(0, 1); err != nil {
 		return
@@ -380,7 +361,6 @@ func (self *Muxer) WriteTrailerWithPacket(pkt av.Packet) (err error) {
 		return
 	}
 	b = nil
-	self.bufw = nil
 	self.streams = nil
 	return
 }
