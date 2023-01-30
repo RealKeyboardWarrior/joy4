@@ -817,15 +817,16 @@ func (self *VideoDecoder) Decode(pkt []byte) (img *VideoFrame, err error) {
 			w := int(frame.width)
 			h := int(frame.height)
 			ys := int(frame.linesize[0])
+			cs := int(frame.linesize[1])
 
 			img = &VideoFrame{
 				Frame: frame,
 				Image: image.YCbCr{
-					Y:              fromCPtr(unsafe.Pointer(frame.data[0]), w*h),
-					Cb:             fromCPtr(unsafe.Pointer(frame.data[1]), w*h/4),
-					Cr:             fromCPtr(unsafe.Pointer(frame.data[2]), w*h/4),
+					Y:              fromCPtr(unsafe.Pointer(frame.data[0]), ys*h),
+					Cb:             fromCPtr(unsafe.Pointer(frame.data[1]), cs*h/2),
+					Cr:             fromCPtr(unsafe.Pointer(frame.data[2]), cs*h/2),
 					YStride:        ys,
-					CStride:        ys / 2,
+					CStride:        cs,
 					SubsampleRatio: image.YCbCrSubsampleRatio420,
 					Rect:           image.Rect(0, 0, w, h),
 				},
