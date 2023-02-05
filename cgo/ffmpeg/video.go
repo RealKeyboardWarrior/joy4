@@ -57,6 +57,12 @@ func FreeVideoFrame(self *VideoFrame) {
 	self.Free()
 }
 
+func AllocVideoFrame() *VideoFrame {
+	return &VideoFrame{
+		Frame: C.av_frame_alloc(),
+	}
+}
+
 func (v VideoFrame) Width() int {
 	return v.Image.Rect.Dx()
 }
@@ -283,7 +289,6 @@ func (self *FramerateConverter) ConvertFramerate(in *VideoFrame) (out []*VideoFr
 		f.Image.Rect = in.Image.Rect
 		f.Framerate.Num = self.OutFpsNum
 		f.Framerate.Den = self.OutFpsDen
-		//runtime.SetFinalizer(f, FreeVideoFrame)
 		out = append(out, f)
 	}
 	return
@@ -798,12 +803,9 @@ func (self *VideoDecoder) Setup() (err error) {
 	return
 }
 
-func (self *VideoDecoder) Decode(pkt []byte) (img *VideoFrame, err error) {
+func (self *VideoDecoder) Decode(frame *VideoFrame, pkt []byte) (img *VideoFrame, err error) {
 	ff := &self.ff.ff
 
-	//cgotimg := C.int(0)
-	frame := C.av_frame_alloc()
-	//cerr := C.wrap_avcodec_decode_video2(ff.codecCtx, frame, unsafe.Pointer(&pkt[0]), C.int(len(pkt)), &cgotimg)
 	cerr := C.wrap_avcodec_send_packet(ff.codecCtx, unsafe.Pointer(&pkt[0]), C.int(len(pkt)))
 	if cerr < C.int(0) {
 		err = fmt.Errorf("ffmpeg: avcodec_decode_video2 failed: %d", cerr)
@@ -812,30 +814,30 @@ func (self *VideoDecoder) Decode(pkt []byte) (img *VideoFrame, err error) {
 
 	if cerr >= C.int(0) {
 
-		ret := C.avcodec_receive_frame(ff.codecCtx, frame)
+		ret := C.avcodec_receive_frame(ff.codecCtx, frame.Frame)
 		if ret == 0 {
-			w := int(frame.width)
-			h := int(frame.height)
-			ys := int(frame.linesize[0])
-			cs := int(frame.linesize[1])
 
-			img = &VideoFrame{
-				Frame: frame,
-				Image: image.YCbCr{
-					Y:              fromCPtr(unsafe.Pointer(frame.data[0]), ys*h),
-					Cb:             fromCPtr(unsafe.Pointer(frame.data[1]), cs*h/2),
-					Cr:             fromCPtr(unsafe.Pointer(frame.data[2]), cs*h/2),
-					YStride:        ys,
-					CStride:        cs,
-					SubsampleRatio: image.YCbCrSubsampleRatio420,
-					Rect:           image.Rect(0, 0, w, h),
-				},
-				ImageGray: image.Gray{
-					Pix:    fromCPtr(unsafe.Pointer(frame.data[0]), w*h),
-					Stride: ys,
-					Rect:   image.Rect(0, 0, w, h),
-				}}
-			//runtime.SetFinalizer(img, FreeVideoFrame)
+			fr := frame.Frame
+			w := int(fr.width)
+			h := int(fr.height)
+			ys := int(fr.linesize[0])
+			cs := int(fr.linesize[1])
+
+			frame.Image = image.YCbCr{
+				Y:              fromCPtr(unsafe.Pointer(fr.data[0]), ys*h),
+				Cb:             fromCPtr(unsafe.Pointer(fr.data[1]), cs*h/2),
+				Cr:             fromCPtr(unsafe.Pointer(fr.data[2]), cs*h/2),
+				YStride:        ys,
+				CStride:        cs,
+				SubsampleRatio: image.YCbCrSubsampleRatio420,
+				Rect:           image.Rect(0, 0, w, h),
+			}
+
+			frame.ImageGray = image.Gray{
+				Pix:    fromCPtr(unsafe.Pointer(fr.data[0]), w*h),
+				Stride: ys,
+				Rect:   image.Rect(0, 0, w, h),
+			}
 		}
 	}
 
@@ -882,7 +884,6 @@ func (self *VideoDecoder) DecodeSingle(pkt []byte) (img *VideoFrame, err error) 
 				Stride: ys,
 				Rect:   image.Rect(0, 0, w, h),
 			}}
-		//runtime.SetFinalizer(img, FreeVideoFrame)
 	}
 
 	return
