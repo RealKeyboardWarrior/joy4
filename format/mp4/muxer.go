@@ -87,7 +87,7 @@ func (self *Muxer) newStream(codec av.CodecData, index int, withoutAudio bool) (
 		stream.sample.SyncSample = &mp4io.SyncSample{}
 	}
 
-	stream.timeScale = 90000
+	stream.timeScale = 10000000
 	stream.muxer = self
 	self.streams = append(self.streams, stream)
 
@@ -252,7 +252,7 @@ func (self *Muxer) WriteTrailer() (err error) {
 
 	maxDur := time.Duration(0)
 	//timeScale := int64(10000)
-	timeScale := int64(90000)
+	timeScale := int64(1000)
 	for _, stream := range self.streams {
 		switch stream.Type() {
 		case av.H264, av.AAC:
@@ -321,7 +321,7 @@ func (self *Muxer) WriteTrailerWithPacket(pkt av.Packet) (err error) {
 
 	maxDur := time.Duration(0)
 	//timeScale := int64(10000)
-	timeScale := int64(90000)
+	timeScale := int64(1000)
 	for _, stream := range self.streams {
 		switch stream.Type() {
 		case av.H264, av.AAC:
