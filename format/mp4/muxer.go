@@ -251,7 +251,8 @@ func (self *Muxer) WriteTrailer() (err error) {
 	}
 
 	maxDur := time.Duration(0)
-	timeScale := int64(10000)
+	//timeScale := int64(10000)
+	timeScale := int64(90000)
 	for _, stream := range self.streams {
 		switch stream.Type() {
 		case av.H264, av.AAC:
@@ -319,7 +320,8 @@ func (self *Muxer) WriteTrailerWithPacket(pkt av.Packet) (err error) {
 	}
 
 	maxDur := time.Duration(0)
-	timeScale := int64(10000)
+	//timeScale := int64(10000)
+	timeScale := int64(90000)
 	for _, stream := range self.streams {
 		switch stream.Type() {
 		case av.H264, av.AAC:
