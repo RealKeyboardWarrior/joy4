@@ -6,7 +6,6 @@ package ffmpeg
 */
 import "C"
 import (
-	"runtime"
 	"unsafe"
 )
 
@@ -49,12 +48,12 @@ func newFFCtxByCodec(codec *C.AVCodec) (ff *ffctx, err error) {
 	ff.ff.codec = codec
 	ff.ff.codecCtx = C.avcodec_alloc_context3(codec)
 	ff.ff.profile = C.FF_PROFILE_UNKNOWN
-	runtime.SetFinalizer(ff, freeFFCtx)
 	return
 }
 
 func freeFFCtx(self *ffctx) {
 	ff := &self.ff
+	ff.codec = nil
 	if ff.frame != nil {
 		C.av_frame_free(&ff.frame)
 	}

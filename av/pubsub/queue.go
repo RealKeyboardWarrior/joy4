@@ -2,11 +2,12 @@
 package pubsub
 
 import (
-	"github.com/kerberos-io/joy4/av"
-	"github.com/kerberos-io/joy4/av/pktque"
 	"io"
 	"sync"
 	"time"
+
+	"github.com/kerberos-io/joy4/av"
+	"github.com/kerberos-io/joy4/av/pktque"
 )
 
 //        time
@@ -75,8 +76,18 @@ func (self *Queue) Close() (err error) {
 	self.closed = true
 	self.cond.Broadcast()
 
+	// Close all QueueCursor's ReadPacket
+	for i := 0; i < self.buf.Size; i++ {
+		pkt := self.buf.Pop()
+		pkt.Data = nil
+	}
+
 	self.lock.Unlock()
 	return
+}
+
+func (self *Queue) GetSize() int {
+	return self.buf.Count
 }
 
 // Put packet into buffer, old packets will be discared.

@@ -8,6 +8,8 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
+	"io"
+
 	"github.com/kerberos-io/joy4/av"
 	"github.com/kerberos-io/joy4/av/avutil"
 	"github.com/kerberos-io/joy4/codec"
@@ -15,7 +17,7 @@ import (
 	"github.com/kerberos-io/joy4/codec/h264parser"
 	"github.com/kerberos-io/joy4/format/rtsp/sdp"
 	"github.com/kerberos-io/joy4/utils/bits/pio"
-	"io"
+
 	//"log"
 	"net"
 	"net/textproto"
@@ -23,7 +25,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
 )
 
 var ErrCodecDataChange = fmt.Errorf("rtsp: codec data change, please call HandleCodecDataChange()")
@@ -108,13 +109,13 @@ func DialTimeout(uri string, timeout time.Duration) (self *Client, err error) {
 	connt := &connWithTimeout{Conn: conn}
 
 	self = &Client{
-		conn:            connt,
-		brconn:          bufio.NewReaderSize(connt, 256),
-		url:             URL,
-		requestUri:      u2.String(),
-		DebugRtp:        DebugRtp,
-		DebugRtsp:       DebugRtsp,
-		SkipErrRtpBlock: SkipErrRtpBlock,
+		conn:                connt,
+		brconn:              bufio.NewReaderSize(connt, 256),
+		url:                 URL,
+		requestUri:          u2.String(),
+		DebugRtp:            DebugRtp,
+		DebugRtsp:           DebugRtsp,
+		SkipErrRtpBlock:     SkipErrRtpBlock,
 		RtpKeepAliveTimeout: 10 * time.Second,
 	}
 	return
@@ -200,6 +201,11 @@ func (self *Client) SendRtpKeepalive() (err error) {
 			req := Request{
 				Method: "OPTIONS",
 				Uri:    self.requestUri,
+				Header: []string{
+					"User-Agent: Kerberos.io",
+					//"Accept: application/sdp",
+					//"Require: www.onvif.org/ver20/backchannel",
+				},
 			}
 			if self.session != "" {
 				req.Header = append(req.Header, "Session: "+self.session)
@@ -668,7 +674,11 @@ func (self *Client) Describe() (streams []sdp.Media, err error) {
 		req := Request{
 			Method: "DESCRIBE",
 			Uri:    self.requestUri,
-			Header: []string{"Accept: application/sdp"},
+			Header: []string{
+				"User-Agent: Kerberos.io",
+				"Accept: application/sdp",
+				//"Require: www.onvif.org/ver20/backchannel",
+			},
 		}
 		if err = self.WriteRequest(req); err != nil {
 			return
@@ -692,6 +702,8 @@ func (self *Client) Describe() (streams []sdp.Media, err error) {
 	}
 
 	_, medias := sdp.Parse(body)
+
+	fmt.Println(medias)
 
 	self.streams = []*Stream{}
 	for _, media := range medias {
@@ -807,12 +819,12 @@ func (self *Stream) makeCodecData() (err error) {
 				return
 			}
 		/*case av.OPUS:
-			channelLayout := av.CH_MONO
-			if media.ChannelCount == 2 {
-				channelLayout = av.CH_STEREO
-			}
+		channelLayout := av.CH_MONO
+		if media.ChannelCount == 2 {
+			channelLayout = av.CH_STEREO
+		}
 
-			self.CodecData = codec.NewOpusCodecData(media.TimeScale, channelLayout)*/
+		self.CodecData = codec.NewOpusCodecData(media.TimeScale, channelLayout)*/
 		default:
 			err = fmt.Errorf("rtsp: Type=%d unsupported", media.Type)
 			return
