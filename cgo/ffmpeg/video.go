@@ -906,14 +906,12 @@ func (dec VideoDecoder) GetFramerate() (num, den int) {
 	return
 }
 
-func NewVideoDecoder(stream av.CodecData) (dec *VideoDecoder, err error) {
-	_dec := &VideoDecoder{}
+func NewVideoDecoder(decoder *VideoDecoder, stream av.CodecData) (err error) {
 	var id uint32
-
 	switch stream.Type() {
 	case av.H264:
 		h264 := stream.(h264parser.CodecData)
-		_dec.Extradata = h264.AVCDecoderConfRecordBytes()
+		decoder.Extradata = h264.AVCDecoderConfRecordBytes()
 		id = C.AV_CODEC_ID_H264
 
 	default:
@@ -927,14 +925,12 @@ func NewVideoDecoder(stream av.CodecData) (dec *VideoDecoder, err error) {
 		return
 	}
 
-	if _dec.ff, err = newFFCtxByCodec(c); err != nil {
+	if decoder.ff, err = newFFCtxByCodec(c); err != nil {
 		return
 	}
-	if err = _dec.Setup(); err != nil {
+	if err = decoder.Setup(); err != nil {
 		return
 	}
-
-	dec = _dec
 	return
 }
 
