@@ -703,8 +703,6 @@ func (self *Client) Describe() (streams []sdp.Media, err error) {
 
 	_, medias := sdp.Parse(body)
 
-	fmt.Println(medias)
-
 	self.streams = []*Stream{}
 	for _, media := range medias {
 		stream := &Stream{Sdp: media, client: self}
