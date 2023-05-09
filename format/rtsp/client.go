@@ -816,13 +816,18 @@ func (self *Stream) makeCodecData() (err error) {
 				err = fmt.Errorf("rtsp: aac sdp config invalid: %s", err)
 				return
 			}
-		/*case av.OPUS:
-		channelLayout := av.CH_MONO
-		if media.ChannelCount == 2 {
-			channelLayout = av.CH_STEREO
-		}
+		case av.OPUS:
 
-		self.CodecData = codec.NewOpusCodecData(media.TimeScale, channelLayout)*/
+			// TODO!
+			self.CodecData = codec.NewPCMMulawCodecData()
+
+			//channelLayout := av.CH_MONO
+			//if media.ChannelCount == 2 {
+			//	channelLayout = av.CH_STEREO
+			//}
+
+			//self.CodecData = codec.NewOpusCodecData(media.TimeScale, channelLayout)
+
 		default:
 			err = fmt.Errorf("rtsp: Type=%d unsupported", media.Type)
 			return
