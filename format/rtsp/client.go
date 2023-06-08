@@ -18,7 +18,7 @@ import (
 	"github.com/kerberos-io/joy4/format/rtsp/sdp"
 	"github.com/kerberos-io/joy4/utils/bits/pio"
 
-	//"log"
+	"log"
 	"net"
 	"net/textproto"
 	"net/url"
@@ -706,9 +706,13 @@ func (self *Client) Describe() (streams []sdp.Media, err error) {
 	self.streams = []*Stream{}
 	for _, media := range medias {
 		stream := &Stream{Sdp: media, client: self}
-		stream.makeCodecData()
-		self.streams = append(self.streams, stream)
-		streams = append(streams, media)
+		err = stream.makeCodecData()
+		if err == nil {
+			self.streams = append(self.streams, stream)
+			streams = append(streams, media)
+		} else {
+			log.Print("Error: ", err.Error())
+		}
 	}
 	self.stage = stageDescribeDone
 	return
