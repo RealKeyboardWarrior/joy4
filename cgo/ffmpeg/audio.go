@@ -92,14 +92,14 @@ func (self *Resampler) Resample(in av.AudioFrame) (out av.AudioFrame, err error)
 		self.avr = avr
 	}
 
-	var inChannels, inLinesize int
+	var inChannels int // , inLinesize
 	inSampleCount := in.SampleCount
 	if !self.inSampleFormat.IsPlanar() {
 		inChannels = 1
-		inLinesize = inSampleCount * in.SampleFormat.BytesPerSample() * self.inChannelLayout.Count()
+		// inLinesize = inSampleCount * in.SampleFormat.BytesPerSample() * self.inChannelLayout.Count()
 	} else {
 		inChannels = self.inChannelLayout.Count()
-		inLinesize = inSampleCount * in.SampleFormat.BytesPerSample()
+		// inLinesize = inSampleCount * in.SampleFormat.BytesPerSample()
 	}
 	inData := make([]*C.uint8_t, inChannels)
 	for i := 0; i < inChannels; i++ {
