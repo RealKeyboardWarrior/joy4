@@ -109,7 +109,7 @@ func (self *Handlers) NewAudioEncoder(typ av.CodecType) (enc av.AudioEncoder, er
 			}
 		}
 	}
-	err = fmt.Errorf("avutil: encoder", typ, "not found")
+	err = fmt.Errorf("avutil: encoder %v not found", typ)
 	return
 }
 
@@ -121,7 +121,7 @@ func (self *Handlers) NewAudioDecoder(codec av.AudioCodecData) (dec av.AudioDeco
 			}
 		}
 	}
-	err = fmt.Errorf("avutil: decoder", codec.Type(), "not found")
+	err = fmt.Errorf("avutil: decoder %v not found", codec.Type())
 	return
 }
 
