@@ -16,7 +16,7 @@ jobs:
           cache: true
 
       - name: Install deps
-        run: sudo apt-get install libavcodec-dev libavformat-dev libavfilter-dev
+        run: sudo apt-get install libavcodec-dev libavformat-dev libavfilter-dev libavresample-dev
 
       - name: Build
         run: go build -v ./...
