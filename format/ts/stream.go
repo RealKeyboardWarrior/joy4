@@ -2,8 +2,9 @@ package ts
 
 import (
 	"time"
-	"github.com/kerberos-io/joy4/av"
-	"github.com/kerberos-io/joy4/format/ts/tsio"
+
+	"github.com/RealKeyboardWarrior/joy4/av"
+	"github.com/RealKeyboardWarrior/joy4/format/ts/tsio"
 )
 
 type Stream struct {

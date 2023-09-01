@@ -1,11 +1,11 @@
 package main
 
 import (
-	"github.com/kerberos-io/joy4/av"
-	"github.com/kerberos-io/joy4/av/transcode"
-	"github.com/kerberos-io/joy4/format"
-	"github.com/kerberos-io/joy4/av/avutil"
-	"github.com/kerberos-io/joy4/cgo/ffmpeg"
+	"github.com/RealKeyboardWarrior/joy4/av"
+	"github.com/RealKeyboardWarrior/joy4/av/avutil"
+	"github.com/RealKeyboardWarrior/joy4/av/transcode"
+	"github.com/RealKeyboardWarrior/joy4/cgo/ffmpeg"
+	"github.com/RealKeyboardWarrior/joy4/format"
 )
 
 // need ffmpeg with libfdkaac installed
@@ -42,4 +42,3 @@ func main() {
 	infile.Close()
 	trans.Close()
 }
-

@@ -22,8 +22,8 @@ import (
 	"runtime"
 	"unsafe"
 
-	"github.com/kerberos-io/joy4/av"
-	"github.com/kerberos-io/joy4/codec/h264parser"
+	"github.com/RealKeyboardWarrior/joy4/av"
+	"github.com/RealKeyboardWarrior/joy4/codec/h264parser"
 )
 
 // VideoFramerate represents a FPS value with a fraction (numerator + denominator)

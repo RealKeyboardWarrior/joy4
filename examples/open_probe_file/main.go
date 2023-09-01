@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/kerberos-io/joy4/av"
-	"github.com/kerberos-io/joy4/av/avutil"
-	"github.com/kerberos-io/joy4/format"
+
+	"github.com/RealKeyboardWarrior/joy4/av"
+	"github.com/RealKeyboardWarrior/joy4/av/avutil"
+	"github.com/RealKeyboardWarrior/joy4/format"
 )
 
 func init() {
@@ -36,4 +37,3 @@ func main() {
 
 	file.Close()
 }
-

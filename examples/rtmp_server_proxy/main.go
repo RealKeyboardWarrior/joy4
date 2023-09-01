@@ -3,9 +3,10 @@ package main
 import (
 	"fmt"
 	"strings"
-	"github.com/kerberos-io/joy4/format"
-	"github.com/kerberos-io/joy4/av/avutil"
-	"github.com/kerberos-io/joy4/format/rtmp"
+
+	"github.com/RealKeyboardWarrior/joy4/av/avutil"
+	"github.com/RealKeyboardWarrior/joy4/format"
+	"github.com/RealKeyboardWarrior/joy4/format/rtmp"
 )
 
 func init() {

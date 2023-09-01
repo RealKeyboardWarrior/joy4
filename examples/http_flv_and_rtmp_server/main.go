@@ -1,14 +1,15 @@
 package main
 
 import (
-	"sync"
 	"io"
 	"net/http"
-	"github.com/kerberos-io/joy4/format"
-	"github.com/kerberos-io/joy4/av/avutil"
-	"github.com/kerberos-io/joy4/av/pubsub"
-	"github.com/kerberos-io/joy4/format/rtmp"
-	"github.com/kerberos-io/joy4/format/flv"
+	"sync"
+
+	"github.com/RealKeyboardWarrior/joy4/av/avutil"
+	"github.com/RealKeyboardWarrior/joy4/av/pubsub"
+	"github.com/RealKeyboardWarrior/joy4/format"
+	"github.com/RealKeyboardWarrior/joy4/format/flv"
+	"github.com/RealKeyboardWarrior/joy4/format/rtmp"
 )
 
 func init() {
@@ -78,7 +79,7 @@ func main() {
 
 		if ch != nil {
 			w.Header().Set("Content-Type", "video/x-flv")
-			w.Header().Set("Transfer-Encoding", "chunked")		
+			w.Header().Set("Transfer-Encoding", "chunked")
 			w.Header().Set("Access-Control-Allow-Origin", "*")
 			w.WriteHeader(200)
 			flusher := w.(http.Flusher)
