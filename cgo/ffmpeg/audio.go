@@ -6,8 +6,8 @@ int wrap_avcodec_decode_audio4(AVCodecContext *ctx, AVFrame *frame, void *data, 
 	struct AVPacket pkt = {.data = data, .size = size};
 	return avcodec_decode_audio4(ctx, frame, got, &pkt);
 }
-int wrap_avresample_convert(AVAudioResampleContext *avr, int *out, int outsize, int outcount, int *in, int insize, int incount) {
-	return avresample_convert(avr, (void *)out, outsize, outcount, (void *)in, insize, incount);
+int wrap_swr_convert(SwrContext *avr, int *out, int outsize, int outcount, int *in, int insize, int incount) {
+	return swr_convert(avr, (void *)out, outsize, outcount, (void *)in, insize, incount);
 }
 */
 import "C"
@@ -28,7 +28,7 @@ type Resampler struct {
 	inSampleFormat, OutSampleFormat   av.SampleFormat
 	inChannelLayout, OutChannelLayout av.ChannelLayout
 	inSampleRate, OutSampleRate       int
-	avr                               *C.AVAudioResampleContext
+	avr                               *C.SwrContext
 }
 
 func (self *Resampler) Resample(in av.AudioFrame) (out av.AudioFrame, err error) {
@@ -43,7 +43,7 @@ func (self *Resampler) Resample(in av.AudioFrame) (out av.AudioFrame, err error)
 				outChannels = 1
 			}
 			outData := make([]*C.uint8_t, outChannels)
-			outSampleCount := int(C.avresample_get_out_samples(self.avr, C.int(in.SampleCount)))
+			outSampleCount := int(C.swr_get_out_samples(self.avr, C.int(in.SampleCount)))
 			outLinesize := outSampleCount * self.OutSampleFormat.BytesPerSample()
 			flush.Data = make([][]byte, outChannels)
 			for i := 0; i < outChannels; i++ {
@@ -54,13 +54,13 @@ func (self *Resampler) Resample(in av.AudioFrame) (out av.AudioFrame, err error)
 			flush.SampleFormat = self.OutSampleFormat
 			flush.SampleRate = self.OutSampleRate
 
-			convertSamples := int(C.wrap_avresample_convert(
+			convertSamples := int(C.wrap_swr_convert(
 				self.avr,
 				(*C.int)(unsafe.Pointer(&outData[0])), C.int(outLinesize), C.int(outSampleCount),
 				nil, C.int(0), C.int(0),
 			))
 			if convertSamples < 0 {
-				err = fmt.Errorf("ffmpeg: avresample_convert_frame failed")
+				err = fmt.Errorf("ffmpeg: swr_convert_frame failed")
 				return
 			}
 			flush.SampleCount = convertSamples
@@ -77,18 +77,18 @@ func (self *Resampler) Resample(in av.AudioFrame) (out av.AudioFrame, err error)
 			})
 		}
 
-		C.avresample_free(&self.avr)
+		C.swr_free(&self.avr)
 		self.inSampleFormat = in.SampleFormat
 		self.inSampleRate = in.SampleRate
 		self.inChannelLayout = in.ChannelLayout
-		avr := C.avresample_alloc_context()
+		avr := C.swr_alloc_context()
 		C.av_opt_set_int(unsafe.Pointer(avr), C.CString("in_channel_layout"), C.int64_t(channelLayoutAV2FF(self.inChannelLayout)), 0)
 		C.av_opt_set_int(unsafe.Pointer(avr), C.CString("out_channel_layout"), C.int64_t(channelLayoutAV2FF(self.OutChannelLayout)), 0)
 		C.av_opt_set_int(unsafe.Pointer(avr), C.CString("in_sample_rate"), C.int64_t(self.inSampleRate), 0)
 		C.av_opt_set_int(unsafe.Pointer(avr), C.CString("out_sample_rate"), C.int64_t(self.OutSampleRate), 0)
 		C.av_opt_set_int(unsafe.Pointer(avr), C.CString("in_sample_fmt"), C.int64_t(sampleFormatAV2FF(self.inSampleFormat)), 0)
 		C.av_opt_set_int(unsafe.Pointer(avr), C.CString("out_sample_fmt"), C.int64_t(sampleFormatAV2FF(self.OutSampleFormat)), 0)
-		C.avresample_open(avr)
+		C.swr_open(avr)
 		self.avr = avr
 	}
 
@@ -107,7 +107,7 @@ func (self *Resampler) Resample(in av.AudioFrame) (out av.AudioFrame, err error)
 	}
 
 	var outChannels, outLinesize, outBytesPerSample int
-	outSampleCount := int(C.avresample_get_out_samples(self.avr, C.int(in.SampleCount)))
+	outSampleCount := int(C.swr_get_out_samples(self.avr, C.int(in.SampleCount)))
 	if !self.OutSampleFormat.IsPlanar() {
 		outChannels = 1
 		outBytesPerSample = self.OutSampleFormat.BytesPerSample() * self.OutChannelLayout.Count()
@@ -127,13 +127,13 @@ func (self *Resampler) Resample(in av.AudioFrame) (out av.AudioFrame, err error)
 	out.SampleFormat = self.OutSampleFormat
 	out.SampleRate = self.OutSampleRate
 
-	convertSamples := int(C.wrap_avresample_convert(
+	convertSamples := int(C.wrap_swr_convert(
 		self.avr,
 		(*C.int)(unsafe.Pointer(&outData[0])), C.int(outLinesize), C.int(outSampleCount),
 		(*C.int)(unsafe.Pointer(&inData[0])), C.int(inLinesize), C.int(inSampleCount),
 	))
 	if convertSamples < 0 {
-		err = fmt.Errorf("ffmpeg: avresample_convert_frame failed")
+		err = fmt.Errorf("ffmpeg: swr_convert_frame failed")
 		return
 	}
 
@@ -152,7 +152,7 @@ func (self *Resampler) Resample(in av.AudioFrame) (out av.AudioFrame, err error)
 }
 
 func (self *Resampler) Close() {
-	C.avresample_free(&self.avr)
+	C.swr_free(&self.avr)
 }
 
 type AudioEncoder struct {
