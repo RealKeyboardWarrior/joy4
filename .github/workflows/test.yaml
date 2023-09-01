@@ -16,7 +16,7 @@ jobs:
           cache: true
 
       - name: Install deps
-        run: apt-get install libavcodec-dev libavformat-dev
+        run: sudo apt-get install libavcodec-dev libavformat-dev
 
       - name: Build
         run: go build -v ./...
