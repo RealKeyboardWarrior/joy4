@@ -412,6 +412,7 @@ func (self *Muxer) flushMoof() (err error) {
 func (self *Muxer) WritePacket(pkt av.Packet) (err error) {
 	// Check if pkt.Idx is a valid stream
 	if len(self.streams) < int(pkt.Idx+1) {
+		err = fmt.Errorf("invalid pkt.Idx %v provided for streams", pkt.Idx)
 		return
 	}
 	stream := self.streams[pkt.Idx]
