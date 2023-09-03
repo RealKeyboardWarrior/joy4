@@ -232,6 +232,26 @@ func SplitNALUs(b []byte) ([][]byte, int) {
 	return [][]byte{b}, NALU_RAW
 }
 
+func AnnexBToAVCC(b []byte) ([]byte, error) {
+	nalus, err := DecodeAnnexB(b)
+	if err != nil {
+		return nil, err
+	}
+
+	// Filter out everything and only leave VCL frames
+	nalusFiltered := make([][]byte, 0)
+	for _, nalu := range nalus {
+		naluType := nalu[0] & 0x1f
+		if naluType >= 1 && naluType <= 5 {
+			nalusFiltered = append(nalusFiltered, nalu)
+		}
+	}
+
+	// TODO: deal with SPS & PPS as extradata in AVCC
+
+	return EncodeAVCC(nalusFiltered), nil
+}
+
 // PktToCodecData parses NAL units to find SPS and PPS, and derive codec data from them. h264CodecData can be nil if the SPS and/or PPS is not found
 func PktToCodecData(pkt av.Packet) (h264CodecData av.CodecData, err error) {
 	h264CodecData = nil
