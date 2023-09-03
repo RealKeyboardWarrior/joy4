@@ -13,6 +13,8 @@ func DecodeAVCC(b []byte) ([][]byte, error) {
 		return nil, ErrInvalidAVCC
 	}
 
+	// TODO: AVCC can be 1, 2, 3 or 4 bytes length encoding
+	// At the moment we just force expect it to be 4
 	val4 := pio.U32BE(b)
 	if val4 > uint32(len(b)-4) {
 		return nil, ErrInvalidAVCC
@@ -41,4 +43,18 @@ func DecodeAVCC(b []byte) ([][]byte, error) {
 	}
 
 	return nil, ErrInvalidAVCC
+}
+
+func EncodeAVCC(nalus [][]byte) []byte {
+	b := make([]byte, 0)
+
+	for _, nalu := range nalus {
+		// Always encode AVCC with 4 bytes length
+		size := make([]byte, 4)
+		pio.PutU32BE(size, uint32(len(nalu)))
+		b = append(b, size...)
+		b = append(b, nalu...)
+	}
+
+	return b
 }

@@ -33,9 +33,20 @@ func TestDecodeAVCC(t *testing.T) {
 		t.Errorf("expected 2 NAL unit")
 	}
 	if nal := hex.EncodeToString(nalus[0]); nal != "aabbccaabbccaabb" {
-		t.Errorf("Expected %v", nal)
+		t.Errorf("Unexpected %v", nal)
 	}
 	if nal := hex.EncodeToString(nalus[1]); nal != "aa" {
-		t.Errorf("Expected %v", nal)
+		t.Errorf("Unexpected %v", nal)
+	}
+}
+
+func TestEncodeAVCC(t *testing.T) {
+	nalOne, _ := hex.DecodeString("aabbccaabbccaabb")
+	nalTwo, _ := hex.DecodeString("aa")
+
+	avccFrame := EncodeAVCC([][]byte{nalOne, nalTwo})
+
+	if avccFrameHex := hex.EncodeToString(avccFrame); avccFrameHex != "00000008aabbccaabbccaabb00000001aa" {
+		t.Errorf("Unexpected %v", avccFrameHex)
 	}
 }
